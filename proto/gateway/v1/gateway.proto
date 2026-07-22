@@ -1,0 +1,240 @@
+syntax = "proto3";
+
+package gateway.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+message CreateInvitationRequest {}
+
+message CreateInvitationResponse {
+  string invitation_token = 1;
+  string invitation_url = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  int32 max_uses = 4;
+}
+
+message SignUpRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 8,
+    (buf.validate.field).string.max_len = 72
+  ];
+  string invitation_token = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message SignUpResponse {
+  string token = 1;
+}
+
+message SignInRequest {
+  string email = 1 [(buf.validate.field).string.email = true];
+  string password = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 8,
+    (buf.validate.field).string.max_len = 72
+  ];
+}
+
+message SignInResponse {
+  string token = 1;
+}
+
+message SignOutRequest {}
+
+message SignOutResponse {}
+
+message User {
+  string id = 1;
+  string name = 2;
+}
+
+message ListUsersRequest {
+  // TODO: add pagination
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message UpdateUserRequest {
+  string name = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message DeleteUserRequest {}
+
+message DeleteUserResponse {
+  User user = 1;
+}
+
+message CreateSessionRequest {}
+
+message CreateSessionResponse {
+  Session session = 1;
+}
+
+message Session {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp closed_at = 3;
+  repeated User participants = 4;
+  User winner = 5;
+}
+
+message ListSessionsRequest {}
+
+message ListSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message GetSessionRequest {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message GetSessionResponse {
+  Session session = 1;
+}
+
+message EndSessionRequest {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message EndSessionResponse {
+  User winner = 1;
+}
+
+message SetSessionMovieRequest {
+  string session_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string movie_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message SetSessionMovieResponse {}
+
+message DeleteSessionRequest {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message DeleteSessionResponse {
+  Session session = 1;
+}
+
+message AddParticipantRequest {
+  string session_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string user_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message AddParticipantResponse {}
+
+message RemoveParticipantRequest {
+  string session_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+  string user_id = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message RemoveParticipantResponse {}
+
+message ListParticipantsRequest {
+  string session_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message ListParticipantsResponse {
+  repeated User participants = 1;
+}
+
+message AddUserMovieRequest {
+  string movie_title = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message Movie {
+  string id = 1;
+  string title = 2;
+}
+
+message AddUserMovieResponse {
+  Movie movie = 1;
+}
+
+message ListUserMoviesRequest {
+  string user_id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message ListUserMoviesResponse {
+  repeated Movie movies = 1;
+}
+
+message DeleteUserMovieRequest {
+  string id = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+
+message DeleteUserMovieResponse {}
+
+service GatewayService {
+  rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse);
+  rpc SignUp(SignUpRequest) returns (SignUpResponse); // POST /v1/auth/signup
+  rpc SignIn(SignInRequest) returns (SignInResponse); // POST /v1/auth/signin
+  rpc SignOut(SignOutRequest) returns (SignOutResponse); // POST /v1/auth/signout
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse); // GET /v1/users
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse); // PUT /v1/users/{id}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse); // DELETE /v1/users/{id}
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse); // POST /v1/sessions
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse); // GET /v1/sessions/{id}
+  rpc EndSession(EndSessionRequest) returns (EndSessionResponse); // POST /v1/sessions/{id}:end
+  rpc SetSessionMovie(SetSessionMovieRequest) returns (SetSessionMovieResponse); // POST /v1/sessions/{id}/movie
+  rpc DeleteSession(DeleteSessionRequest) returns (DeleteSessionResponse); // DELETE /v1/sessions/{id}
+  rpc AddParticipant(AddParticipantRequest) returns (AddParticipantResponse); // POST /v1/sessions/{id}/participants
+  rpc RemoveParticipant(RemoveParticipantRequest) returns (RemoveParticipantResponse); // DELETE /v1/sessions/{id}/participants/{id}
+  rpc ListParticipants(ListParticipantsRequest) returns (ListParticipantsResponse); // GET /v1/sessions/{id}/participants
+  rpc AddUserMovie(AddUserMovieRequest) returns (AddUserMovieResponse); // POST /v1/users/{id}/movies
+  rpc ListUserMovies(ListUserMoviesRequest) returns (ListUserMoviesResponse); // GET /v1/users/{id}/movies
+  rpc DeleteUserMovie(DeleteUserMovieRequest) returns (DeleteUserMovieResponse); // DELETE /v1/users/{id}/movies/{id}
+}
