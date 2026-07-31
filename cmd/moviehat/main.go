@@ -17,12 +17,15 @@ import (
 	"github.com/stiflerGit/moviehat/api/gateway/v1/gatewayv1connect"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	authstorage "github.com/stiflerGit/moviehat/internal/auth/persistence/sqlite"
-	extractor "github.com/stiflerGit/moviehat/internal/extractor/fair_share"
-	extractorstorage "github.com/stiflerGit/moviehat/internal/extractor/fair_share/persistence/sqlite"
+	extractor "github.com/stiflerGit/moviehat/internal/extractor/weighted"
+	equalprobabilityscorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/equal"
+	fairsharescorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share"
+	fairsharescorerpersistence "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share/persistence/sqlite"
 	gateway "github.com/stiflerGit/moviehat/internal/gateway/v1"
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
 	moviehat "github.com/stiflerGit/moviehat/internal/moviehat"
 	moviehatsqlite "github.com/stiflerGit/moviehat/internal/moviehat/persistence/sqlite"
+	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
@@ -63,21 +66,39 @@ func main() {
 }
 
 func run(ctx context.Context, config Config) error {
-	db, err := initDB(ctx, config.DBPath)
+	txManager, err := initDB(ctx, config.DBPath)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer txManager.Close()
 
 	slog.InfoContext(ctx, "starting moviehat server", "addr", config.Addr, "dbPath", config.DBPath)
 
 	logger := slog.Default()
 
-	authHandler, err := auth.New(authstorage.New(db), config.AuthSecret, auth.WithLogger(logger))
+	authHandler, err := auth.New(authstorage.New(txManager), config.AuthSecret, auth.WithLogger(logger))
 	if err != nil {
 		return fmt.Errorf("auth.New: %w", err)
 	}
-	movieHatHandler := moviehat.New(moviehatsqlite.New(db), extractor.New(extractorstorage.New(db)), moviehat.WithLogger(logger))
+
+	extractor, err := extractor.New(
+		fairsharescorerpersistence.New(txManager),
+		[]extractor.WeightedScorer{
+			{
+				Weight: 70,
+				Scorer: fairsharescorer.New(fairsharescorerpersistence.New(txManager)),
+			},
+			{
+				Weight: 30,
+				Scorer: equalprobabilityscorer.Scorer{},
+			},
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("weighted.New: %w", err)
+	}
+
+	movieHatHandler := moviehat.New(moviehatsqlite.New(txManager), extractor, moviehat.WithLogger(logger))
 
 	if err := bootstrapInitialUser(ctx, config, authHandler, movieHatHandler); err != nil {
 		return fmt.Errorf("bootstrapInitialUser: %w", err)
@@ -184,8 +205,8 @@ func runMigrations(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func initDB(ctx context.Context, dbPath string) (*sql.DB, error) {
-	dbFile, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE, 0666)
+func initDB(ctx context.Context, dbPath string) (*tx.Manager, error) {
+	dbFile, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		return nil, fmt.Errorf("os.OpenFile: %w", err)
 	}
@@ -208,7 +229,7 @@ func initDB(ctx context.Context, dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("runMigrations: %w", err)
 	}
 
-	return db, nil
+	return tx.NewManager(db), nil
 }
 
 func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.Handler, movieHatHandler *moviehat.Handler) error {
@@ -220,7 +241,8 @@ func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.
 		return errors.New("BOOTSTRAP_EMAIL and BOOTSTRAP_PASSWORD are required when BOOTSTRAP_ENABLED=true")
 	}
 
-	bootstrapRet, err := authHandler.BootstrapCreateUser(ctx,
+	bootstrapRet, err := authHandler.BootstrapCreateUser(
+		ctx,
 		&auth.BootstrapCreateUserRequest{
 			Email:    config.BootstrapEmail,
 			Password: config.BootstrapPassword,

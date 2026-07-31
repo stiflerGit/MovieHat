@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pressly/goose/v3"
 	"github.com/stiflerGit/moviehat/internal/auth/persistence"
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
+	"github.com/stiflerGit/moviehat/pkg/sql/tx"
+
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 )
@@ -26,7 +28,7 @@ func newAuthTestStorage(t *testing.T) *Storage {
 	_, err = provider.Up(t.Context())
 	require.NoError(t, err)
 
-	return New(db)
+	return New(tx.NewManager(db))
 }
 
 func TestStorageInsertUser(t *testing.T) {

@@ -9,27 +9,23 @@ import (
 	"time"
 
 	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"github.com/google/uuid"
+	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 )
-
-type executor interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
 
 // Storage stores MovieHat data in SQLite.
 type Storage struct {
-	db       *sql.DB
-	executor executor
+	txManager *tx.Manager
 }
 
 var _ persistence.Storage = (*Storage)(nil)
 
 // New creates a SQLite MovieHat storage.
-func New(db *sql.DB) *Storage {
-	return &Storage{db: db, executor: db}
+func New(txManager *tx.Manager) *Storage {
+	return &Storage{txManager: txManager}
 }
 
 // WithTx executes MovieHat storage operations in a transaction.
@@ -37,23 +33,9 @@ func (s *Storage) WithTx(ctx context.Context, fn func(context.Context, persisten
 	if fn == nil {
 		return persistence.ErrInvalidArgument{Err: errors.New("fn is nil")}
 	}
-
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("r.db.BeginTx(ctx): %w", err)
-	}
-	defer tx.Rollback()
-
-	err = fn(ctx, &Storage{db: s.db, executor: tx})
-	if err != nil {
-		return fmt.Errorf("executing function: %w", err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("tx.Commit(): %w", err)
-	}
-
-	return nil
+	return s.txManager.WithTx(ctx, func(ctx context.Context) error {
+		return fn(ctx, s)
+	})
 }
 
 // CreateUser creates a MovieHat user.
@@ -70,7 +52,7 @@ func (s *Storage) CreateUser(ctx context.Context, in persistence.CreateUserArg) 
 	}
 
 	query := `INSERT INTO users(id, name, created_at, updated_at) VALUES (?, ?, ?, ?)`
-	_, err := s.executor.ExecContext(ctx, query, user.ID, user.Name, user.CreatedAt, user.UpdatedAt)
+	_, err := s.txManager.Executor(ctx).ExecContext(ctx, query, user.ID, user.Name, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		return persistence.User{}, fmt.Errorf("r.executor.ExecContext: %w", err)
 	}
@@ -92,7 +74,7 @@ func (s *Storage) GetUser(ctx context.Context, in persistence.GetUserArg) (persi
 	var user persistence.User
 	var deletedAt sql.NullTime
 
-	err := s.executor.QueryRowContext(ctx, query, in.UserID).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt, &deletedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.UserID).Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.User{}, persistence.ErrNotFound
@@ -114,7 +96,7 @@ func (s *Storage) ListUsers(ctx context.Context, in persistence.ListUsersArg) ([
 	}
 
 	var count int
-	if err := s.executor.QueryRowContext(ctx, query).Scan(&count); err != nil {
+	if err := s.txManager.Executor(ctx).QueryRowContext(ctx, query).Scan(&count); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -130,7 +112,7 @@ func (s *Storage) ListUsers(ctx context.Context, in persistence.ListUsersArg) ([
 		query += " WHERE deleted_at IS NULL"
 	}
 
-	rows, err := s.executor.QueryContext(ctx, query)
+	rows, err := s.txManager.Executor(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("querying all users")
 	}
@@ -177,7 +159,7 @@ func (s *Storage) UpdateUser(ctx context.Context, in persistence.UpdateUserArg) 
 
 	var deletedAt sql.NullTime
 
-	err := s.executor.QueryRowContext(ctx, query, user.Name, user.UpdatedAt, user.ID).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, user.Name, user.UpdatedAt, user.ID).
 		Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -208,7 +190,7 @@ func (s *Storage) DeleteUser(ctx context.Context, in persistence.DeleteUserArg) 
 
 	var deletedAt sql.NullTime
 
-	err := s.executor.QueryRowContext(ctx, query, user.UpdatedAt, user.DeletedAt, user.ID).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, user.UpdatedAt, user.DeletedAt, user.ID).
 		Scan(&user.ID, &user.Name, &user.CreatedAt, &user.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -236,7 +218,7 @@ func (s *Storage) CreateSession(ctx context.Context, in persistence.CreateSessio
 	SELECT ?, ?, ?
 	WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE closed_at IS NULL AND deleted_at IS NULL)`
 
-	result, err := s.executor.ExecContext(ctx, query, session.ID, session.CreatedAt, session.UpdatedAt)
+	result, err := s.txManager.Executor(ctx).ExecContext(ctx, query, session.ID, session.CreatedAt, session.UpdatedAt)
 	if err != nil {
 		return session, fmt.Errorf("inserting row in sessions table: %w", err)
 	}
@@ -247,7 +229,7 @@ func (s *Storage) CreateSession(ctx context.Context, in persistence.CreateSessio
 	}
 
 	if count == 0 {
-		return session, persistence.ErrSessionAlreadyExists
+		return session, persistence.ErrAlreadyExists
 	}
 
 	return session, nil
@@ -258,7 +240,7 @@ func (s *Storage) ListSessions(ctx context.Context, in persistence.ListSessionsA
 	query := `SELECT COUNT(id) FROM sessions WHERE deleted_at IS NULL`
 
 	var count int
-	err := s.executor.QueryRowContext(ctx, query).Scan(&count)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.ListSessionsRet{}, nil
@@ -272,7 +254,7 @@ func (s *Storage) ListSessions(ctx context.Context, in persistence.ListSessionsA
 	ORDER BY id
 	`
 
-	rows, err := s.executor.QueryContext(ctx, query)
+	rows, err := s.txManager.Executor(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return persistence.ListSessionsRet{}, fmt.Errorf("r.executor.QueryContext: %w", err)
 	}
@@ -318,7 +300,7 @@ func (s *Storage) GetSession(ctx context.Context, in persistence.GetSessionArg) 
 	session := persistence.Session{}
 	var closedAt, deletedAt sql.NullTime
 	var winnerID, watchedMovieID sql.NullString
-	err := s.executor.QueryRowContext(ctx, query, in.ID).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.ID).
 		Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt, &closedAt, &deletedAt, &winnerID, &watchedMovieID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -377,7 +359,7 @@ func (s *Storage) UpdateSession(ctx context.Context, in persistence.UpdateSessio
 	var session persistence.Session
 	var closedAt, deletedAt sql.NullTime
 	var winnerID, watchedMovieID sql.NullString
-	err := s.executor.QueryRowContext(ctx, query, args...).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).
 		Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt, &closedAt, &deletedAt, &winnerID, &watchedMovieID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -410,7 +392,7 @@ func (s *Storage) DeleteSession(ctx context.Context, id string) (persistence.Ses
 	var closedAt, deletedAt sql.NullTime
 	var winnerID, watchedMovieID sql.NullString
 
-	err := s.executor.QueryRowContext(ctx, query, now, now, id).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, now, now, id).
 		Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt, &closedAt, &deletedAt, &winnerID, &watchedMovieID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -437,7 +419,7 @@ func (s *Storage) CloseSession(ctx context.Context, id string) error {
 
 	const query = `UPDATE sessions SET closed_at=?, updated_at=? WHERE id=? AND closed_at IS NULL AND deleted_at IS NULL`
 
-	res, err := s.executor.ExecContext(ctx, query, now, now, id)
+	res, err := s.txManager.Executor(ctx).ExecContext(ctx, query, now, now, id)
 	if err != nil {
 		return fmt.Errorf("r.executor.ExecContext: %w", err)
 	}
@@ -489,8 +471,13 @@ func (r *Storage) CreateParticipant(ctx context.Context, in persistence.CreatePa
 	)`
 
 	now := time.Now()
-	res, err := r.executor.ExecContext(ctx, query, participant.ID, participant.UserID, participant.SessionID, now, participant.UserID, in.SessionID)
+	res, err := r.txManager.Executor(ctx).ExecContext(ctx, query, participant.ID, participant.UserID, participant.SessionID, now, participant.UserID, in.SessionID)
 	if err != nil {
+		if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
+			if sqliteErr.Code() == sqlitelib.SQLITE_CONSTRAINT_UNIQUE {
+				return persistence.Participant{}, persistence.ErrAlreadyExists
+			}
+		}
 		return participant, fmt.Errorf("r.db.ExecContext: %w", err)
 	}
 
@@ -543,7 +530,7 @@ func (s *Storage) DeleteParticipant(ctx context.Context, in persistence.DeletePa
 		AND deleted_at IS NULL
 	)`
 
-	res, err := s.executor.ExecContext(ctx, query, in.SessionID, in.UserID, in.SessionID)
+	res, err := s.txManager.Executor(ctx).ExecContext(ctx, query, in.SessionID, in.UserID, in.SessionID)
 	if err != nil {
 		return fmt.Errorf("r.db.ExecContext: %w", err)
 	}
@@ -576,7 +563,7 @@ func (s *Storage) ListParticipants(ctx context.Context, in persistence.ListParti
 	query := `SELECT COUNT(id) FROM participants WHERE session_id=?`
 
 	var count int
-	err := s.executor.QueryRowContext(ctx, query, in.SessionID).Scan(&count)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.SessionID).Scan(&count)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.ListParticipantsRet{}, nil
@@ -589,7 +576,7 @@ func (s *Storage) ListParticipants(ctx context.Context, in persistence.ListParti
 	}
 
 	query = `SELECT u.id, u.name FROM participants p JOIN users u ON p.user_id=u.id WHERE session_id=?`
-	rows, err := s.executor.QueryContext(ctx, query, in.SessionID)
+	rows, err := s.txManager.Executor(ctx).QueryContext(ctx, query, in.SessionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.ListParticipantsRet{}, persistence.ErrNotFound
@@ -628,8 +615,8 @@ func (s *Storage) CreateMovie(ctx context.Context, in persistence.CreateMovieArg
 	now := time.Now()
 
 	const query = `
-	INSERT INTO movies(id, owner_id, title, status, created_at, updated_at)
-	SELECT ?, ?, ?, ?, ?, ?
+	INSERT INTO movies(id, owner_id, title, status, note, created_at, updated_at)
+	SELECT ?, ?, ?, ?, ?, ?, ?
 	WHERE EXISTS (
 		SELECT 1 FROM users WHERE id = ? AND deleted_at IS NULL
 	)`
@@ -639,11 +626,13 @@ func (s *Storage) CreateMovie(ctx context.Context, in persistence.CreateMovieArg
 		UserID:    in.UserID,
 		Title:     in.MovieTitle,
 		Status:    persistence.MovieStatusPending,
+		Note:      in.Note,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	res, err := s.executor.ExecContext(ctx, query, movie.ID, movie.UserID, movie.Title, string(movie.Status), movie.CreatedAt, movie.UpdatedAt, movie.UserID)
+	res, err := s.txManager.Executor(ctx).ExecContext(ctx, query, movie.ID, movie.UserID, movie.Title, string(movie.Status), movie.Note,
+		movie.CreatedAt, movie.UpdatedAt, movie.UserID)
 	if err != nil {
 		return movie, fmt.Errorf("r.db.ExecContext: %w", err)
 	}
@@ -680,20 +669,20 @@ func (s *Storage) GetMovie(ctx context.Context, in persistence.GetMovieArg) (per
 	where := strings.Join(whereStmts, " AND ")
 
 	query := fmt.Sprintf(`
-	SELECT id, owner_id, title, status, created_at, updated_at, deleted_at
+	SELECT id, owner_id, title, status, note, created_at, updated_at, deleted_at
 	FROM movies
 	WHERE %s`, where)
 
 	var movie persistence.Movie
 	var deletedAt sql.NullTime
 
-	err := s.executor.QueryRowContext(ctx, query, args...).
-		Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).
+		Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.Note, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.Movie{}, persistence.ErrNotFound
 		}
-		return persistence.Movie{}, fmt.Errorf("s.executor.QueryRowContext: %w", err)
+		return persistence.Movie{}, fmt.Errorf("s.txManager.GetDB(ctx).QueryRowContext: %w", err)
 	}
 
 	movie.DeletedAt = deletedAt.Time
@@ -717,7 +706,7 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 	query := fmt.Sprintf(`SELECT COUNT(id) FROM movies WHERE %s`, where)
 
 	var count int
-	if err := s.executor.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
+	if err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
 		return persistence.ListMoviesRet{}, fmt.Errorf("r.db.QueryRowContext COUNT: %w", err)
 	}
 
@@ -726,11 +715,11 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 	}
 
 	query = fmt.Sprintf(`
-		SELECT id, owner_id, title, status, created_at, updated_at, deleted_at
+		SELECT id, owner_id, title, status, note, created_at, updated_at, deleted_at
 		FROM movies
 		WHERE %s`, where)
 
-	rows, err := s.executor.QueryContext(ctx, query, args...)
+	rows, err := s.txManager.Executor(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.ListMoviesRet{}, persistence.ErrNotFound
@@ -744,7 +733,7 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 		var movie persistence.Movie
 
 		var deletedAt sql.NullTime
-		err = rows.Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
+		err = rows.Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.Note, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
 		if err != nil {
 			return persistence.ListMoviesRet{}, fmt.Errorf("r.db.QueryRowContext: %w", err)
 		}
@@ -780,6 +769,11 @@ func (s *Storage) UpdateMovie(ctx context.Context, in persistence.UpdateMovieArg
 		args = append(args, string(*in.Status))
 	}
 
+	if in.Note != nil && *in.Note != "" {
+		setStmts = append(setStmts, "note=?")
+		args = append(args, *in.Note)
+	}
+
 	set := strings.Join(setStmts, ",")
 	query := fmt.Sprintf("UPDATE movies SET %s WHERE id=? RETURNING id, owner_id, title, status, created_at, updated_at, deleted_at", set)
 	args = append(args, in.ID)
@@ -787,7 +781,7 @@ func (s *Storage) UpdateMovie(ctx context.Context, in persistence.UpdateMovieArg
 	var movie persistence.Movie
 	var deletedAt sql.NullTime
 
-	err := s.executor.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.Movie{}, persistence.ErrNotFound
@@ -812,12 +806,12 @@ func (s *Storage) DeleteMovie(ctx context.Context, in persistence.DeleteMovieArg
 	UPDATE movies
 	SET deleted_at=?, updated_at=?
 	WHERE owner_id=? AND id=? AND deleted_at IS NULL
-	RETURNING id, owner_id, title, status, created_at, updated_at, deleted_at`
+	RETURNING id, owner_id, title, status, note, created_at, updated_at, deleted_at`
 
 	var movie persistence.Movie
 	var deletedAt sql.NullTime
-	err := s.executor.QueryRowContext(ctx, query, now, now, in.UserID, in.MovieID).
-		Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, now, now, in.UserID, in.MovieID).
+		Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.Note, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.Movie{}, persistence.ErrNotFound

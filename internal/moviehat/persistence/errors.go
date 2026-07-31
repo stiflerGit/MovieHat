@@ -8,10 +8,10 @@ import (
 var (
 	// ErrNotFound reports that a requested record does not exist.
 	ErrNotFound = errors.New("not found")
-	// ErrSessionAlreadyExists reports that an open session already exists.
-	ErrSessionAlreadyExists = errors.New("there is another open session")
 	// ErrSessionClosed reports that a session is already closed.
 	ErrSessionClosed = errors.New("session closed")
+	// ErrAlreadyExists reports that the resource already exists
+	ErrAlreadyExists = errors.New("resource already exists")
 )
 
 // ErrInvalidArgument reports invalid storage input.

@@ -73,7 +73,7 @@ func TestExtractor_Extract(t *testing.T) {
 					Return(tt.ret, tt.listErr)
 			}
 
-			e := New(store, WithEqualChanceRate(defaultEqualChanceRate))
+			e := New(store, WithEqualProbabilityRate(defaultEqualProbabilityRate))
 			got, err := e.Extract(t.Context(), tt.current)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -151,7 +151,7 @@ func TestExtractor_StoreExtraction(t *testing.T) {
 }
 
 func TestExtractor_ExtractWithHistory_Deterministic(t *testing.T) {
-	e := New(nil, WithEqualChanceRate(defaultEqualChanceRate))
+	e := New(nil, WithEqualProbabilityRate(defaultEqualProbabilityRate))
 
 	got, err := e.ExtractWithHistory(t.Context(), nil, nil)
 	require.Error(t, err)
@@ -159,7 +159,7 @@ func TestExtractor_ExtractWithHistory_Deterministic(t *testing.T) {
 }
 
 func TestExtractor_extract_SkipsZeroProbabilityParticipants(t *testing.T) {
-	e := New(nil, WithEqualChanceRate(0))
+	e := New(nil, WithEqualProbabilityRate(0))
 	participants := []*pb.User{newUser("a"), newUser("b"), newUser("c")}
 
 	got := e.extract(map[string]float64{
@@ -210,14 +210,14 @@ func TestExtractor_ExtractWithHistory_Probability(t *testing.T) {
 			want:    map[string]float64{"a": 1.0},
 		},
 		{
-			name:            "pure fairness equal positive scores even distribution",
-			equalChanceRate: 0,
+			name:                "pure fairness equal positive scores even distribution",
+			equalProbabilityRate: 0,
 			history:         []*pb.Session{newSession([]string{"a", "b", "c"}, "c")},
 			current:         newSession([]string{"a", "b"}, ""),
 			want:            map[string]float64{"a": .5, "b": .5},
 		},
 		{
-			name: "single positive chance maps to later participant",
+			name: "single positive probability maps to later participant",
 			history: []*pb.Session{
 				newSession([]string{"a", "b", "c"}, "b"),
 				newSession([]string{"a", "b"}, "a"),
@@ -238,15 +238,15 @@ func TestExtractor_ExtractWithHistory_Probability(t *testing.T) {
 			},
 		},
 		{
-			name:            "spec example session 2",
-			equalChanceRate: 0.3,
-			history:         []*pb.Session{newSession([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}, "a")},
-			current:         newSession([]string{"a", "b", "c"}, ""),
-			want:            map[string]float64{"a": 0.1, "b": 0.45, "c": 0.45},
+			name:                "spec example session 2",
+			equalProbabilityRate: 0.3,
+			history:             []*pb.Session{newSession([]string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}, "a")},
+			current:             newSession([]string{"a", "b", "c"}, ""),
+			want:                map[string]float64{"a": 0.1, "b": 0.45, "c": 0.45},
 		},
 		{
-			name:            "spec example session 4",
-			equalChanceRate: 0.3,
+			name:                "spec example session 4",
+			equalProbabilityRate: 0.3,
 			history: []*pb.Session{
 				newSession([]string{"a", "b", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"}, "f1"),
 				newSession([]string{"a", "b", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8"}, "f2"),
@@ -266,14 +266,14 @@ func TestExtractor_ExtractWithHistory_Probability(t *testing.T) {
 
 type probabilityTestCase struct {
 	name            string
-	equalChanceRate float64
+	equalProbabilityRate float64
 	history         []*pb.Session
 	current         *pb.Session
 	want            map[string]float64
 }
 
 func testProbability(t *testing.T, tc probabilityTestCase) {
-	e := New(nil, WithEqualChanceRate(tc.equalChanceRate))
+	e := New(nil, WithEqualProbabilityRate(tc.equalProbabilityRate))
 
 	count := map[string]float64{}
 	sum := 0

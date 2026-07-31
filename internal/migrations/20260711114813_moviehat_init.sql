@@ -14,6 +14,7 @@ CREATE TABLE movies (
     owner_id   VARCHAR(255) NOT NULL,
     title      TEXT NOT NULL,
     status     VARCHAR(255) NOT NULL,
+    note       TEXT NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME,

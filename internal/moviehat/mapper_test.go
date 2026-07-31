@@ -56,7 +56,7 @@ func TestRepoErrorToAPIError(t *testing.T) {
 	}{
 		{name: "invalid arg", err: persistence.ErrInvalidArgument{Err: errors.New("bad")}, code: connect.CodeInvalidArgument},
 		{name: "not found", err: persistence.ErrNotFound, code: connect.CodeNotFound},
-		{name: "session exists", err: persistence.ErrSessionAlreadyExists, code: connect.CodeAlreadyExists},
+		{name: "session exists", err: persistence.ErrAlreadyExists, code: connect.CodeAlreadyExists},
 		{name: "session closed", err: persistence.ErrSessionClosed, code: connect.CodeFailedPrecondition},
 		{name: "fallback", err: errors.New("boom"), code: connect.CodeInternal},
 	}

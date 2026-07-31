@@ -56,6 +56,21 @@ func (mr *MockExtractorMockRecorder) Extract(ctx, session any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Extract", reflect.TypeOf((*MockExtractor)(nil).Extract), ctx, session)
 }
 
+// GetProbabilities mocks base method.
+func (m *MockExtractor) GetProbabilities(arg0 context.Context, arg1 *gatewayv1.Session) ([]float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProbabilities", arg0, arg1)
+	ret0, _ := ret[0].([]float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProbabilities indicates an expected call of GetProbabilities.
+func (mr *MockExtractorMockRecorder) GetProbabilities(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProbabilities", reflect.TypeOf((*MockExtractor)(nil).GetProbabilities), arg0, arg1)
+}
+
 // StoreExtraction mocks base method.
 func (m *MockExtractor) StoreExtraction(ctx context.Context, session *gatewayv1.Session) error {
 	m.ctrl.T.Helper()

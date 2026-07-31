@@ -66,6 +66,9 @@ const (
 	// GatewayServiceSetSessionMovieProcedure is the fully-qualified name of the GatewayService's
 	// SetSessionMovie RPC.
 	GatewayServiceSetSessionMovieProcedure = "/gateway.v1.GatewayService/SetSessionMovie"
+	// GatewayServiceGetSessionProbabilitiesProcedure is the fully-qualified name of the
+	// GatewayService's GetSessionProbabilities RPC.
+	GatewayServiceGetSessionProbabilitiesProcedure = "/gateway.v1.GatewayService/GetSessionProbabilities"
 	// GatewayServiceDeleteSessionProcedure is the fully-qualified name of the GatewayService's
 	// DeleteSession RPC.
 	GatewayServiceDeleteSessionProcedure = "/gateway.v1.GatewayService/DeleteSession"
@@ -103,6 +106,7 @@ type GatewayServiceClient interface {
 	GetSession(context.Context, *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
 	EndSession(context.Context, *v1.EndSessionRequest) (*v1.EndSessionResponse, error)
 	SetSessionMovie(context.Context, *v1.SetSessionMovieRequest) (*v1.SetSessionMovieResponse, error)
+	GetSessionProbabilities(context.Context, *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error)
 	DeleteSession(context.Context, *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error)
 	AddParticipant(context.Context, *v1.AddParticipantRequest) (*v1.AddParticipantResponse, error)
 	RemoveParticipant(context.Context, *v1.RemoveParticipantRequest) (*v1.RemoveParticipantResponse, error)
@@ -195,6 +199,12 @@ func NewGatewayServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(gatewayServiceMethods.ByName("SetSessionMovie")),
 			connect.WithClientOptions(opts...),
 		),
+		getSessionProbabilities: connect.NewClient[v1.GetSessionProbabilitiesRequest, v1.GetSessionProbabilitiesResponse](
+			httpClient,
+			baseURL+GatewayServiceGetSessionProbabilitiesProcedure,
+			connect.WithSchema(gatewayServiceMethods.ByName("GetSessionProbabilities")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteSession: connect.NewClient[v1.DeleteSessionRequest, v1.DeleteSessionResponse](
 			httpClient,
 			baseURL+GatewayServiceDeleteSessionProcedure,
@@ -242,25 +252,26 @@ func NewGatewayServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // gatewayServiceClient implements GatewayServiceClient.
 type gatewayServiceClient struct {
-	createInvitation  *connect.Client[v1.CreateInvitationRequest, v1.CreateInvitationResponse]
-	signUp            *connect.Client[v1.SignUpRequest, v1.SignUpResponse]
-	signIn            *connect.Client[v1.SignInRequest, v1.SignInResponse]
-	signOut           *connect.Client[v1.SignOutRequest, v1.SignOutResponse]
-	listUsers         *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
-	updateUser        *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
-	deleteUser        *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
-	createSession     *connect.Client[v1.CreateSessionRequest, v1.CreateSessionResponse]
-	listSessions      *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
-	getSession        *connect.Client[v1.GetSessionRequest, v1.GetSessionResponse]
-	endSession        *connect.Client[v1.EndSessionRequest, v1.EndSessionResponse]
-	setSessionMovie   *connect.Client[v1.SetSessionMovieRequest, v1.SetSessionMovieResponse]
-	deleteSession     *connect.Client[v1.DeleteSessionRequest, v1.DeleteSessionResponse]
-	addParticipant    *connect.Client[v1.AddParticipantRequest, v1.AddParticipantResponse]
-	removeParticipant *connect.Client[v1.RemoveParticipantRequest, v1.RemoveParticipantResponse]
-	listParticipants  *connect.Client[v1.ListParticipantsRequest, v1.ListParticipantsResponse]
-	addUserMovie      *connect.Client[v1.AddUserMovieRequest, v1.AddUserMovieResponse]
-	listUserMovies    *connect.Client[v1.ListUserMoviesRequest, v1.ListUserMoviesResponse]
-	deleteUserMovie   *connect.Client[v1.DeleteUserMovieRequest, v1.DeleteUserMovieResponse]
+	createInvitation        *connect.Client[v1.CreateInvitationRequest, v1.CreateInvitationResponse]
+	signUp                  *connect.Client[v1.SignUpRequest, v1.SignUpResponse]
+	signIn                  *connect.Client[v1.SignInRequest, v1.SignInResponse]
+	signOut                 *connect.Client[v1.SignOutRequest, v1.SignOutResponse]
+	listUsers               *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	updateUser              *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
+	deleteUser              *connect.Client[v1.DeleteUserRequest, v1.DeleteUserResponse]
+	createSession           *connect.Client[v1.CreateSessionRequest, v1.CreateSessionResponse]
+	listSessions            *connect.Client[v1.ListSessionsRequest, v1.ListSessionsResponse]
+	getSession              *connect.Client[v1.GetSessionRequest, v1.GetSessionResponse]
+	endSession              *connect.Client[v1.EndSessionRequest, v1.EndSessionResponse]
+	setSessionMovie         *connect.Client[v1.SetSessionMovieRequest, v1.SetSessionMovieResponse]
+	getSessionProbabilities *connect.Client[v1.GetSessionProbabilitiesRequest, v1.GetSessionProbabilitiesResponse]
+	deleteSession           *connect.Client[v1.DeleteSessionRequest, v1.DeleteSessionResponse]
+	addParticipant          *connect.Client[v1.AddParticipantRequest, v1.AddParticipantResponse]
+	removeParticipant       *connect.Client[v1.RemoveParticipantRequest, v1.RemoveParticipantResponse]
+	listParticipants        *connect.Client[v1.ListParticipantsRequest, v1.ListParticipantsResponse]
+	addUserMovie            *connect.Client[v1.AddUserMovieRequest, v1.AddUserMovieResponse]
+	listUserMovies          *connect.Client[v1.ListUserMoviesRequest, v1.ListUserMoviesResponse]
+	deleteUserMovie         *connect.Client[v1.DeleteUserMovieRequest, v1.DeleteUserMovieResponse]
 }
 
 // CreateInvitation calls gateway.v1.GatewayService.CreateInvitation.
@@ -371,6 +382,15 @@ func (c *gatewayServiceClient) SetSessionMovie(ctx context.Context, req *v1.SetS
 	return nil, err
 }
 
+// GetSessionProbabilities calls gateway.v1.GatewayService.GetSessionProbabilities.
+func (c *gatewayServiceClient) GetSessionProbabilities(ctx context.Context, req *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error) {
+	response, err := c.getSessionProbabilities.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // DeleteSession calls gateway.v1.GatewayService.DeleteSession.
 func (c *gatewayServiceClient) DeleteSession(ctx context.Context, req *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error) {
 	response, err := c.deleteSession.CallUnary(ctx, connect.NewRequest(req))
@@ -448,6 +468,7 @@ type GatewayServiceHandler interface {
 	GetSession(context.Context, *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
 	EndSession(context.Context, *v1.EndSessionRequest) (*v1.EndSessionResponse, error)
 	SetSessionMovie(context.Context, *v1.SetSessionMovieRequest) (*v1.SetSessionMovieResponse, error)
+	GetSessionProbabilities(context.Context, *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error)
 	DeleteSession(context.Context, *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error)
 	AddParticipant(context.Context, *v1.AddParticipantRequest) (*v1.AddParticipantResponse, error)
 	RemoveParticipant(context.Context, *v1.RemoveParticipantRequest) (*v1.RemoveParticipantResponse, error)
@@ -536,6 +557,12 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 		connect.WithSchema(gatewayServiceMethods.ByName("SetSessionMovie")),
 		connect.WithHandlerOptions(opts...),
 	)
+	gatewayServiceGetSessionProbabilitiesHandler := connect.NewUnaryHandlerSimple(
+		GatewayServiceGetSessionProbabilitiesProcedure,
+		svc.GetSessionProbabilities,
+		connect.WithSchema(gatewayServiceMethods.ByName("GetSessionProbabilities")),
+		connect.WithHandlerOptions(opts...),
+	)
 	gatewayServiceDeleteSessionHandler := connect.NewUnaryHandlerSimple(
 		GatewayServiceDeleteSessionProcedure,
 		svc.DeleteSession,
@@ -604,6 +631,8 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 			gatewayServiceEndSessionHandler.ServeHTTP(w, r)
 		case GatewayServiceSetSessionMovieProcedure:
 			gatewayServiceSetSessionMovieHandler.ServeHTTP(w, r)
+		case GatewayServiceGetSessionProbabilitiesProcedure:
+			gatewayServiceGetSessionProbabilitiesHandler.ServeHTTP(w, r)
 		case GatewayServiceDeleteSessionProcedure:
 			gatewayServiceDeleteSessionHandler.ServeHTTP(w, r)
 		case GatewayServiceAddParticipantProcedure:
@@ -673,6 +702,10 @@ func (UnimplementedGatewayServiceHandler) EndSession(context.Context, *v1.EndSes
 
 func (UnimplementedGatewayServiceHandler) SetSessionMovie(context.Context, *v1.SetSessionMovieRequest) (*v1.SetSessionMovieResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.SetSessionMovie is not implemented"))
+}
+
+func (UnimplementedGatewayServiceHandler) GetSessionProbabilities(context.Context, *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.GetSessionProbabilities is not implemented"))
 }
 
 func (UnimplementedGatewayServiceHandler) DeleteSession(context.Context, *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error) {

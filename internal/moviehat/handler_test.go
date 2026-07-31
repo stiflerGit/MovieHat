@@ -335,3 +335,133 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 		})
 	}
 }
+
+func TestHandlerGetSessionProbabilities(t *testing.T) {
+	const sessionID = "session-1"
+
+	type testCase struct {
+		name              string
+		req               *pb.GetSessionProbabilitiesRequest
+		setupMock         func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor)
+		wantCode          connect.Code // 0 => success
+		wantProbabilities []*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities
+	}
+
+	probability := func(id string, p float64) *pb.GetSessionProbabilitiesResponse_ParticipantProbabilities {
+		return &pb.GetSessionProbabilitiesResponse_ParticipantProbabilities{UserId: id, Probability: p}
+	}
+
+	testCases := []testCase{
+		{
+			name:     "empty session_id fails validation",
+			req:      &pb.GetSessionProbabilitiesRequest{},
+			wantCode: connect.CodeInvalidArgument,
+		},
+		{
+			name: "session not found",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{}, persistence.ErrNotFound)
+			},
+			wantCode: connect.CodeNotFound,
+		},
+		{
+			name: "get session internal error",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{}, errors.New("boom"))
+			},
+			wantCode: connect.CodeInternal,
+		},
+		{
+			name: "list participants error",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{ID: sessionID}, nil)
+				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
+					Return(persistence.ListParticipantsRet{}, errors.New("boom"))
+			},
+			wantCode: connect.CodeInternal,
+		},
+		{
+			name: "no participants returns empty probabilities",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{ID: sessionID}, nil)
+				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
+					Return(persistence.ListParticipantsRet{}, nil)
+			},
+			wantProbabilities: nil,
+		},
+		{
+			name: "single participant is certain and skips extractor",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{ID: sessionID}, nil)
+				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
+					Return(persistence.ListParticipantsRet{Participants: []persistence.User{{ID: "u1"}}}, nil)
+			},
+			wantProbabilities: []*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities{probability("u1", 1.0)},
+		},
+		{
+			name: "multi participants map probabilities by position",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{ID: sessionID}, nil)
+				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
+					Return(persistence.ListParticipantsRet{Participants: []persistence.User{{ID: "u1"}, {ID: "u2"}, {ID: "u3"}}}, nil)
+				extractor.EXPECT().GetProbabilities(gomock.Any(), gomock.Any()).
+					Return([]float64{0.2, 0.3, 0.5}, nil)
+			},
+			wantProbabilities: []*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities{
+				probability("u1", 0.2), probability("u2", 0.3), probability("u3", 0.5),
+			},
+		},
+		{
+			name: "extractor error",
+			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
+			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor) {
+				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
+					Return(persistence.Session{ID: sessionID}, nil)
+				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
+					Return(persistence.ListParticipantsRet{Participants: []persistence.User{{ID: "u1"}, {ID: "u2"}}}, nil)
+				extractor.EXPECT().GetProbabilities(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("boom"))
+			},
+			wantCode: connect.CodeInternal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			store := persistencemock.NewMockTransactionalStorage(ctrl)
+			extractor := extractormock.NewMockExtractor(ctrl)
+			h := New(store, extractor, WithLogger(testLogger()))
+
+			if tc.setupMock != nil {
+				tc.setupMock(store, extractor)
+			}
+
+			resp, err := h.GetSessionProbabilities(t.Context(), tc.req)
+			if tc.wantCode != 0 {
+				require.Error(t, err)
+				require.Equal(t, tc.wantCode, connect.CodeOf(err))
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, resp.ParticipantsProbabilities, len(tc.wantProbabilities))
+			for i, want := range tc.wantProbabilities {
+				require.Equal(t, want.UserId, resp.ParticipantsProbabilities[i].UserId)
+				require.InDelta(t, want.Probability, resp.ParticipantsProbabilities[i].Probability, 1e-9)
+			}
+		})
+	}
+}

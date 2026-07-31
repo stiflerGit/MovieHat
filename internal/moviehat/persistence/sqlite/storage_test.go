@@ -5,10 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/pressly/goose/v3"
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
 	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/pkg/sql/tx"
+
+	"github.com/google/uuid"
+	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 )
@@ -26,7 +28,7 @@ func newMovieHatTestStorage(t *testing.T) *Storage {
 	_, err = provider.Up(t.Context())
 	require.NoError(t, err)
 
-	return New(db)
+	return New(tx.NewManager(db))
 }
 
 func TestStorageWithTx(t *testing.T) {
@@ -76,7 +78,7 @@ func TestStorageSessionLifecycle(t *testing.T) {
 	require.NotEmpty(t, created.ID)
 
 	_, err = s.CreateSession(ctx, persistence.CreateSessionArg{})
-	require.ErrorIs(t, err, persistence.ErrSessionAlreadyExists)
+	require.ErrorIs(t, err, persistence.ErrAlreadyExists)
 
 	list, err := s.ListSessions(ctx, persistence.ListSessionsAg{})
 	require.NoError(t, err)
@@ -121,6 +123,11 @@ func TestStorageParticipantsLifecycle(t *testing.T) {
 	participant, err := s.CreateParticipant(ctx, persistence.CreateParticipantArg{SessionID: session.ID, UserID: user.ID})
 	require.NoError(t, err)
 	require.Equal(t, session.ID, participant.SessionID)
+
+	// create participant again to test idempotency
+	participant, err = s.CreateParticipant(ctx, persistence.CreateParticipantArg{SessionID: session.ID, UserID: user.ID})
+	require.Error(t, err)
+	require.ErrorIs(t, err, persistence.ErrAlreadyExists)
 
 	list, err := s.ListParticipants(ctx, persistence.ListParticipantsArg{SessionID: session.ID})
 	require.NoError(t, err)

@@ -25,22 +25,23 @@ type AuthHandler interface {
 
 // MovieHatHandler defines the MovieHat operations used by the gateway.
 type MovieHatHandler interface {
-	CreateUser(ctx context.Context, req moviehat.CreateUserRequest) (moviehat.CreateUserResponse, error)
-	ListUsers(ctx context.Context, req *v1.ListUsersRequest) (*v1.ListUsersResponse, error)
-	UpdateUser(ctx context.Context, req *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error)
-	DeleteUser(ctx context.Context, req *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
-	CreateSession(ctx context.Context, req *v1.CreateSessionRequest) (*v1.CreateSessionResponse, error)
-	ListSessions(ctx context.Context, req *v1.ListSessionsRequest) (*v1.ListSessionsResponse, error)
-	GetSession(ctx context.Context, req *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
-	EndSession(ctx context.Context, req *v1.EndSessionRequest) (*v1.EndSessionResponse, error)
+	CreateUser(context.Context, moviehat.CreateUserRequest) (moviehat.CreateUserResponse, error)
+	ListUsers(context.Context, *v1.ListUsersRequest) (*v1.ListUsersResponse, error)
+	UpdateUser(context.Context, *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error)
+	DeleteUser(context.Context, *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error)
+	CreateSession(context.Context, *v1.CreateSessionRequest) (*v1.CreateSessionResponse, error)
+	ListSessions(context.Context, *v1.ListSessionsRequest) (*v1.ListSessionsResponse, error)
+	GetSession(context.Context, *v1.GetSessionRequest) (*v1.GetSessionResponse, error)
+	EndSession(context.Context, *v1.EndSessionRequest) (*v1.EndSessionResponse, error)
 	SetSessionMovie(context.Context, *v1.SetSessionMovieRequest) (*v1.SetSessionMovieResponse, error)
-	DeleteSession(ctx context.Context, req *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error)
-	AddParticipant(ctx context.Context, req *v1.AddParticipantRequest) (*v1.AddParticipantResponse, error)
-	RemoveParticipant(ctx context.Context, req *v1.RemoveParticipantRequest) (*v1.RemoveParticipantResponse, error)
-	ListParticipants(ctx context.Context, req *v1.ListParticipantsRequest) (*v1.ListParticipantsResponse, error)
-	AddUserMovie(ctx context.Context, req *v1.AddUserMovieRequest) (*v1.AddUserMovieResponse, error)
-	ListUserMovies(ctx context.Context, req *v1.ListUserMoviesRequest) (*v1.ListUserMoviesResponse, error)
-	DeleteUserMovie(ctx context.Context, req *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error)
+	GetSessionProbabilities(context.Context, *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error)
+	DeleteSession(context.Context, *v1.DeleteSessionRequest) (*v1.DeleteSessionResponse, error)
+	AddParticipant(context.Context, *v1.AddParticipantRequest) (*v1.AddParticipantResponse, error)
+	RemoveParticipant(context.Context, *v1.RemoveParticipantRequest) (*v1.RemoveParticipantResponse, error)
+	ListParticipants(context.Context, *v1.ListParticipantsRequest) (*v1.ListParticipantsResponse, error)
+	AddUserMovie(context.Context, *v1.AddUserMovieRequest) (*v1.AddUserMovieResponse, error)
+	ListUserMovies(context.Context, *v1.ListUserMoviesRequest) (*v1.ListUserMoviesResponse, error)
+	DeleteUserMovie(context.Context, *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error)
 }
 
 // Handler implements the GatewayService RPC surface.
@@ -155,6 +156,11 @@ func (h *Handler) EndSession(ctx context.Context, req *v1.EndSessionRequest) (*v
 // SetSessionMovie records the watched movie for a closed session.
 func (h *Handler) SetSessionMovie(ctx context.Context, req *v1.SetSessionMovieRequest) (*v1.SetSessionMovieResponse, error) {
 	return h.movieHatHandler.SetSessionMovie(ctx, req)
+}
+
+// GetSessionProbabilities returns the probabilities to be extracted for each participant.
+func (h *Handler) GetSessionProbabilities(ctx context.Context, req *v1.GetSessionProbabilitiesRequest) (*v1.GetSessionProbabilitiesResponse, error) {
+	return h.movieHatHandler.GetSessionProbabilities(ctx, req)
 }
 
 // DeleteSession deletes a movie selection session.

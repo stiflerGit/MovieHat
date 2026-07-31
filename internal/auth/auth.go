@@ -7,14 +7,14 @@ import (
 	"log/slog"
 	"time"
 
-	"buf.build/go/protovalidate"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth/persistence"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -91,7 +91,8 @@ func (h *Handler) BootstrapCreateUser(ctx context.Context, req *BootstrapCreateU
 			return fmt.Errorf("storage.GetUser: %w", err)
 		}
 
-		insertUserRet, err := storage.InsertUser(ctx,
+		insertUserRet, err := storage.InsertUser(
+			ctx,
 			persistence.InsertUserArg{
 				Email:          req.Email,
 				HashedPassword: string(cryptedPassword),
@@ -129,7 +130,8 @@ func (h *Handler) CreateInvitation(ctx context.Context, req *pb.CreateInvitation
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("tokenHash: %w", err))
 	}
 
-	insertVerificationRet, err := h.storage.InsertVerification(ctx,
+	insertVerificationRet, err := h.storage.InsertVerification(
+		ctx,
 		persistence.InsertVerificationArg{
 			TokenHash: tokenHash,
 			ExpiresAt: time.Now().Add(defaultInvitationDuration),
@@ -183,7 +185,8 @@ func (h *Handler) SignUp(ctx context.Context, req *pb.SignUpRequest) (SignUpResp
 			return connect.NewError(connect.CodeInternal, fmt.Errorf("storage.ConsumeVerification: %w", err))
 		}
 
-		insertUserRet, err := storage.InsertUser(ctx,
+		insertUserRet, err := storage.InsertUser(
+			ctx,
 			persistence.InsertUserArg{
 				Email:          req.Email,
 				HashedPassword: string(cryptedPassword),

@@ -63,6 +63,7 @@ func repoMovieToPB(in persistence.Movie) *pb.Movie {
 	return &pb.Movie{
 		Id:    in.ID,
 		Title: in.Title,
+		Note:  in.Note,
 	}
 }
 
@@ -87,7 +88,7 @@ func repoErrorToAPIError(err error) error {
 		code = connect.CodeInvalidArgument
 	case errors.Is(err, persistence.ErrNotFound):
 		code = connect.CodeNotFound
-	case errors.Is(err, persistence.ErrSessionAlreadyExists):
+	case errors.Is(err, persistence.ErrAlreadyExists):
 		code = connect.CodeAlreadyExists
 	case errors.Is(err, persistence.ErrSessionClosed):
 		code = connect.CodeFailedPrecondition

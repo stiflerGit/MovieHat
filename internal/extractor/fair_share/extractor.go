@@ -14,20 +14,20 @@ import (
 )
 
 const (
-	defaultEqualChanceRate = 0.3
+	defaultEqualProbabilityRate = 0.3
 )
 
 // Extractor selects winners using fair-share scoring.
 type Extractor struct {
 	store           persistence.Store
-	equalChanceRate float64
+	equalProbabilityRate float64
 }
 
 // New creates a fair-share extractor.
 func New(store persistence.Store, options ...Option) *Extractor {
 	e := &Extractor{
 		store:           store,
-		equalChanceRate: defaultEqualChanceRate,
+		equalProbabilityRate: defaultEqualProbabilityRate,
 	}
 
 	for _, opt := range options {
@@ -150,20 +150,20 @@ func (e Extractor) extract(userIDToScore map[string]float64, participants []*pb.
 
 	normalize(scores)
 
-	// after normalization we can talk about chances
-	chances := scores
-	if e.equalChanceRate > 0 {
-		equalChanceScore := float64(float64(1.0) / float64(len(participants)))
-		for i := range chances {
-			chances[i] = e.equalChanceRate*equalChanceScore + (1-e.equalChanceRate)*chances[i]
+	// after normalization we can talk about probabilities
+	probabilities := scores
+	if e.equalProbabilityRate > 0 {
+		equalProbabilityScore := float64(float64(1.0) / float64(len(participants)))
+		for i := range probabilities {
+			probabilities[i] = e.equalProbabilityRate*equalProbabilityScore + (1-e.equalProbabilityRate)*probabilities[i]
 		}
 	}
 
 	extraction := rand.Float64()
-	cumulativeChance := float64(0.0)
-	for i, chance := range chances {
-		cumulativeChance += chance
-		if extraction < cumulativeChance {
+	cumulativeProbability := float64(0.0)
+	for i, probability := range probabilities {
+		cumulativeProbability += probability
+		if extraction < cumulativeProbability {
 			return i
 		}
 	}

@@ -43,213 +43,228 @@ func (m *MockMovieHatHandler) EXPECT() *MockMovieHatHandlerMockRecorder {
 }
 
 // AddParticipant mocks base method.
-func (m *MockMovieHatHandler) AddParticipant(ctx context.Context, req *gatewayv1.AddParticipantRequest) (*gatewayv1.AddParticipantResponse, error) {
+func (m *MockMovieHatHandler) AddParticipant(arg0 context.Context, arg1 *gatewayv1.AddParticipantRequest) (*gatewayv1.AddParticipantResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddParticipant", ctx, req)
+	ret := m.ctrl.Call(m, "AddParticipant", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.AddParticipantResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddParticipant indicates an expected call of AddParticipant.
-func (mr *MockMovieHatHandlerMockRecorder) AddParticipant(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) AddParticipant(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddParticipant", reflect.TypeOf((*MockMovieHatHandler)(nil).AddParticipant), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddParticipant", reflect.TypeOf((*MockMovieHatHandler)(nil).AddParticipant), arg0, arg1)
 }
 
 // AddUserMovie mocks base method.
-func (m *MockMovieHatHandler) AddUserMovie(ctx context.Context, req *gatewayv1.AddUserMovieRequest) (*gatewayv1.AddUserMovieResponse, error) {
+func (m *MockMovieHatHandler) AddUserMovie(arg0 context.Context, arg1 *gatewayv1.AddUserMovieRequest) (*gatewayv1.AddUserMovieResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserMovie", ctx, req)
+	ret := m.ctrl.Call(m, "AddUserMovie", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.AddUserMovieResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddUserMovie indicates an expected call of AddUserMovie.
-func (mr *MockMovieHatHandlerMockRecorder) AddUserMovie(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) AddUserMovie(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserMovie", reflect.TypeOf((*MockMovieHatHandler)(nil).AddUserMovie), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserMovie", reflect.TypeOf((*MockMovieHatHandler)(nil).AddUserMovie), arg0, arg1)
 }
 
 // CreateSession mocks base method.
-func (m *MockMovieHatHandler) CreateSession(ctx context.Context, req *gatewayv1.CreateSessionRequest) (*gatewayv1.CreateSessionResponse, error) {
+func (m *MockMovieHatHandler) CreateSession(arg0 context.Context, arg1 *gatewayv1.CreateSessionRequest) (*gatewayv1.CreateSessionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSession", ctx, req)
+	ret := m.ctrl.Call(m, "CreateSession", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.CreateSessionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateSession indicates an expected call of CreateSession.
-func (mr *MockMovieHatHandlerMockRecorder) CreateSession(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) CreateSession(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockMovieHatHandler)(nil).CreateSession), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSession", reflect.TypeOf((*MockMovieHatHandler)(nil).CreateSession), arg0, arg1)
 }
 
 // CreateUser mocks base method.
-func (m *MockMovieHatHandler) CreateUser(ctx context.Context, req v1.CreateUserRequest) (v1.CreateUserResponse, error) {
+func (m *MockMovieHatHandler) CreateUser(arg0 context.Context, arg1 v1.CreateUserRequest) (v1.CreateUserResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, req)
+	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
 	ret0, _ := ret[0].(v1.CreateUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateUser indicates an expected call of CreateUser.
-func (mr *MockMovieHatHandlerMockRecorder) CreateUser(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) CreateUser(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockMovieHatHandler)(nil).CreateUser), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockMovieHatHandler)(nil).CreateUser), arg0, arg1)
 }
 
 // DeleteSession mocks base method.
-func (m *MockMovieHatHandler) DeleteSession(ctx context.Context, req *gatewayv1.DeleteSessionRequest) (*gatewayv1.DeleteSessionResponse, error) {
+func (m *MockMovieHatHandler) DeleteSession(arg0 context.Context, arg1 *gatewayv1.DeleteSessionRequest) (*gatewayv1.DeleteSessionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSession", ctx, req)
+	ret := m.ctrl.Call(m, "DeleteSession", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.DeleteSessionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteSession indicates an expected call of DeleteSession.
-func (mr *MockMovieHatHandlerMockRecorder) DeleteSession(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) DeleteSession(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteSession), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSession", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteSession), arg0, arg1)
 }
 
 // DeleteUser mocks base method.
-func (m *MockMovieHatHandler) DeleteUser(ctx context.Context, req *gatewayv1.DeleteUserRequest) (*gatewayv1.DeleteUserResponse, error) {
+func (m *MockMovieHatHandler) DeleteUser(arg0 context.Context, arg1 *gatewayv1.DeleteUserRequest) (*gatewayv1.DeleteUserResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUser", ctx, req)
+	ret := m.ctrl.Call(m, "DeleteUser", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.DeleteUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteUser indicates an expected call of DeleteUser.
-func (mr *MockMovieHatHandlerMockRecorder) DeleteUser(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) DeleteUser(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteUser), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteUser), arg0, arg1)
 }
 
 // DeleteUserMovie mocks base method.
-func (m *MockMovieHatHandler) DeleteUserMovie(ctx context.Context, req *gatewayv1.DeleteUserMovieRequest) (*gatewayv1.DeleteUserMovieResponse, error) {
+func (m *MockMovieHatHandler) DeleteUserMovie(arg0 context.Context, arg1 *gatewayv1.DeleteUserMovieRequest) (*gatewayv1.DeleteUserMovieResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUserMovie", ctx, req)
+	ret := m.ctrl.Call(m, "DeleteUserMovie", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.DeleteUserMovieResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteUserMovie indicates an expected call of DeleteUserMovie.
-func (mr *MockMovieHatHandlerMockRecorder) DeleteUserMovie(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) DeleteUserMovie(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserMovie", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteUserMovie), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserMovie", reflect.TypeOf((*MockMovieHatHandler)(nil).DeleteUserMovie), arg0, arg1)
 }
 
 // EndSession mocks base method.
-func (m *MockMovieHatHandler) EndSession(ctx context.Context, req *gatewayv1.EndSessionRequest) (*gatewayv1.EndSessionResponse, error) {
+func (m *MockMovieHatHandler) EndSession(arg0 context.Context, arg1 *gatewayv1.EndSessionRequest) (*gatewayv1.EndSessionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EndSession", ctx, req)
+	ret := m.ctrl.Call(m, "EndSession", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.EndSessionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EndSession indicates an expected call of EndSession.
-func (mr *MockMovieHatHandlerMockRecorder) EndSession(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) EndSession(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EndSession", reflect.TypeOf((*MockMovieHatHandler)(nil).EndSession), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EndSession", reflect.TypeOf((*MockMovieHatHandler)(nil).EndSession), arg0, arg1)
 }
 
 // GetSession mocks base method.
-func (m *MockMovieHatHandler) GetSession(ctx context.Context, req *gatewayv1.GetSessionRequest) (*gatewayv1.GetSessionResponse, error) {
+func (m *MockMovieHatHandler) GetSession(arg0 context.Context, arg1 *gatewayv1.GetSessionRequest) (*gatewayv1.GetSessionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSession", ctx, req)
+	ret := m.ctrl.Call(m, "GetSession", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.GetSessionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSession indicates an expected call of GetSession.
-func (mr *MockMovieHatHandlerMockRecorder) GetSession(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) GetSession(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockMovieHatHandler)(nil).GetSession), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSession", reflect.TypeOf((*MockMovieHatHandler)(nil).GetSession), arg0, arg1)
+}
+
+// GetSessionProbabilities mocks base method.
+func (m *MockMovieHatHandler) GetSessionProbabilities(arg0 context.Context, arg1 *gatewayv1.GetSessionProbabilitiesRequest) (*gatewayv1.GetSessionProbabilitiesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSessionProbabilities", arg0, arg1)
+	ret0, _ := ret[0].(*gatewayv1.GetSessionProbabilitiesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSessionProbabilities indicates an expected call of GetSessionProbabilities.
+func (mr *MockMovieHatHandlerMockRecorder) GetSessionProbabilities(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionProbabilities", reflect.TypeOf((*MockMovieHatHandler)(nil).GetSessionProbabilities), arg0, arg1)
 }
 
 // ListParticipants mocks base method.
-func (m *MockMovieHatHandler) ListParticipants(ctx context.Context, req *gatewayv1.ListParticipantsRequest) (*gatewayv1.ListParticipantsResponse, error) {
+func (m *MockMovieHatHandler) ListParticipants(arg0 context.Context, arg1 *gatewayv1.ListParticipantsRequest) (*gatewayv1.ListParticipantsResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListParticipants", ctx, req)
+	ret := m.ctrl.Call(m, "ListParticipants", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.ListParticipantsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListParticipants indicates an expected call of ListParticipants.
-func (mr *MockMovieHatHandlerMockRecorder) ListParticipants(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) ListParticipants(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListParticipants", reflect.TypeOf((*MockMovieHatHandler)(nil).ListParticipants), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListParticipants", reflect.TypeOf((*MockMovieHatHandler)(nil).ListParticipants), arg0, arg1)
 }
 
 // ListSessions mocks base method.
-func (m *MockMovieHatHandler) ListSessions(ctx context.Context, req *gatewayv1.ListSessionsRequest) (*gatewayv1.ListSessionsResponse, error) {
+func (m *MockMovieHatHandler) ListSessions(arg0 context.Context, arg1 *gatewayv1.ListSessionsRequest) (*gatewayv1.ListSessionsResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSessions", ctx, req)
+	ret := m.ctrl.Call(m, "ListSessions", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.ListSessionsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListSessions indicates an expected call of ListSessions.
-func (mr *MockMovieHatHandlerMockRecorder) ListSessions(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) ListSessions(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSessions", reflect.TypeOf((*MockMovieHatHandler)(nil).ListSessions), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSessions", reflect.TypeOf((*MockMovieHatHandler)(nil).ListSessions), arg0, arg1)
 }
 
 // ListUserMovies mocks base method.
-func (m *MockMovieHatHandler) ListUserMovies(ctx context.Context, req *gatewayv1.ListUserMoviesRequest) (*gatewayv1.ListUserMoviesResponse, error) {
+func (m *MockMovieHatHandler) ListUserMovies(arg0 context.Context, arg1 *gatewayv1.ListUserMoviesRequest) (*gatewayv1.ListUserMoviesResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUserMovies", ctx, req)
+	ret := m.ctrl.Call(m, "ListUserMovies", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.ListUserMoviesResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListUserMovies indicates an expected call of ListUserMovies.
-func (mr *MockMovieHatHandlerMockRecorder) ListUserMovies(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) ListUserMovies(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserMovies", reflect.TypeOf((*MockMovieHatHandler)(nil).ListUserMovies), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserMovies", reflect.TypeOf((*MockMovieHatHandler)(nil).ListUserMovies), arg0, arg1)
 }
 
 // ListUsers mocks base method.
-func (m *MockMovieHatHandler) ListUsers(ctx context.Context, req *gatewayv1.ListUsersRequest) (*gatewayv1.ListUsersResponse, error) {
+func (m *MockMovieHatHandler) ListUsers(arg0 context.Context, arg1 *gatewayv1.ListUsersRequest) (*gatewayv1.ListUsersResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsers", ctx, req)
+	ret := m.ctrl.Call(m, "ListUsers", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.ListUsersResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListUsers indicates an expected call of ListUsers.
-func (mr *MockMovieHatHandlerMockRecorder) ListUsers(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) ListUsers(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockMovieHatHandler)(nil).ListUsers), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockMovieHatHandler)(nil).ListUsers), arg0, arg1)
 }
 
 // RemoveParticipant mocks base method.
-func (m *MockMovieHatHandler) RemoveParticipant(ctx context.Context, req *gatewayv1.RemoveParticipantRequest) (*gatewayv1.RemoveParticipantResponse, error) {
+func (m *MockMovieHatHandler) RemoveParticipant(arg0 context.Context, arg1 *gatewayv1.RemoveParticipantRequest) (*gatewayv1.RemoveParticipantResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveParticipant", ctx, req)
+	ret := m.ctrl.Call(m, "RemoveParticipant", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.RemoveParticipantResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RemoveParticipant indicates an expected call of RemoveParticipant.
-func (mr *MockMovieHatHandlerMockRecorder) RemoveParticipant(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) RemoveParticipant(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveParticipant", reflect.TypeOf((*MockMovieHatHandler)(nil).RemoveParticipant), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveParticipant", reflect.TypeOf((*MockMovieHatHandler)(nil).RemoveParticipant), arg0, arg1)
 }
 
 // SetSessionMovie mocks base method.
@@ -268,16 +283,16 @@ func (mr *MockMovieHatHandlerMockRecorder) SetSessionMovie(arg0, arg1 any) *gomo
 }
 
 // UpdateUser mocks base method.
-func (m *MockMovieHatHandler) UpdateUser(ctx context.Context, req *gatewayv1.UpdateUserRequest) (*gatewayv1.UpdateUserResponse, error) {
+func (m *MockMovieHatHandler) UpdateUser(arg0 context.Context, arg1 *gatewayv1.UpdateUserRequest) (*gatewayv1.UpdateUserResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", ctx, req)
+	ret := m.ctrl.Call(m, "UpdateUser", arg0, arg1)
 	ret0, _ := ret[0].(*gatewayv1.UpdateUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockMovieHatHandlerMockRecorder) UpdateUser(ctx, req any) *gomock.Call {
+func (mr *MockMovieHatHandlerMockRecorder) UpdateUser(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockMovieHatHandler)(nil).UpdateUser), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockMovieHatHandler)(nil).UpdateUser), arg0, arg1)
 }

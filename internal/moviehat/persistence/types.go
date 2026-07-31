@@ -166,6 +166,7 @@ type ListParticipantsRet struct {
 type CreateMovieArg struct {
 	UserID     string
 	MovieTitle string
+	Note       string
 }
 
 // GetMovieArg selects a movie.
@@ -179,6 +180,7 @@ type UpdateMovieArg struct {
 	ID     string
 	Title  *string
 	Status *MovieStatus
+	Note   *string
 }
 
 // Movie represents a movie in a user's list.
@@ -187,6 +189,7 @@ type Movie struct {
 	UserID    string
 	Title     string
 	Status    MovieStatus
+	Note      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt time.Time

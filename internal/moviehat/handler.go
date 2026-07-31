@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"buf.build/go/protovalidate"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
@@ -18,6 +19,7 @@ import (
 //
 //go:generate mockgen -package mocks -destination mocks/extractor.go . Extractor
 type Extractor interface {
+	GetProbabilities(context.Context, *pb.Session) ([]float64, error)
 	Extract(ctx context.Context, session *pb.Session) (*pb.User, error)
 	StoreExtraction(ctx context.Context, session *pb.Session) error
 }
@@ -180,7 +182,6 @@ func (h *Handler) GetSession(ctx context.Context, req *pb.GetSessionRequest) (*p
 }
 
 // EndSession ends a session, extracting a winner among participants of the session and store results
-// EndSession closes a movie selection session and returns its winner.
 func (h *Handler) EndSession(ctx context.Context, req *pb.EndSessionRequest) (*pb.EndSessionResponse, error) {
 	if req.Id == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is empty"))
@@ -190,6 +191,7 @@ func (h *Handler) EndSession(ctx context.Context, req *pb.EndSessionRequest) (*p
 
 	var repoSession persistence.Session
 	var repoParticipants []persistence.User
+	var session *pb.Session
 	err := h.repository.WithTx(ctx, func(ctx context.Context, s persistence.Storage) error {
 		err := s.CloseSession(ctx, req.Id)
 		if err != nil {
@@ -202,7 +204,7 @@ func (h *Handler) EndSession(ctx context.Context, req *pb.EndSessionRequest) (*p
 		}
 
 		if len(listParticipantsRet.Participants) < 2 {
-			// no participant for the session. Cannot be closed, just deleted
+			// not enough participant for the session. Cannot be closed, just deleted
 			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("not enough participants: count=%d", len(listParticipantsRet.Participants)))
 		}
 
@@ -223,7 +225,7 @@ func (h *Handler) EndSession(ctx context.Context, req *pb.EndSessionRequest) (*p
 			return fmt.Errorf("r.UpdateSession: %w", err)
 		}
 
-		session := repoSessionToPBSession(repoSession)
+		session = repoSessionToPBSession(repoSession)
 		session.Participants = repoUsersToPBUsers(repoParticipants...)
 		session.Winner = winnerUser
 
@@ -250,17 +252,13 @@ func (h *Handler) EndSession(ctx context.Context, req *pb.EndSessionRequest) (*p
 // the movie watched can be changed by the winner
 // SetSessionMovie records the watched movie for a closed session.
 func (h *Handler) SetSessionMovie(ctx context.Context, req *pb.SetSessionMovieRequest) (*pb.SetSessionMovieResponse, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
 	authSession, ok := authn.GetInfo(ctx).(auth.Session)
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing auth session"))
-	}
-
-	if req.SessionId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("session_id is empty"))
-	}
-
-	if req.MovieId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("movie_id is null"))
 	}
 
 	err := h.repository.WithTx(ctx, func(ctx context.Context, s persistence.Storage) error {
@@ -324,6 +322,67 @@ func (h *Handler) SetSessionMovie(ctx context.Context, req *pb.SetSessionMovieRe
 	return &pb.SetSessionMovieResponse{}, nil
 }
 
+// returns the probability of each participant to be extracted for a given session.
+func (h *Handler) GetSessionProbabilities(ctx context.Context, req *pb.GetSessionProbabilitiesRequest) (*pb.GetSessionProbabilitiesResponse, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	session, err := h.repository.GetSession(ctx, persistence.GetSessionArg{ID: req.SessionId})
+	if err != nil {
+		if errors.Is(err, persistence.ErrNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, err)
+		}
+		h.logger.ErrorContext(ctx, "GetSessionProbabilities h.repository.GetSession", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("h.repository.GetSession: %v", err))
+	}
+	pbSession := repoSessionToPBSession(session)
+
+	participants, err := h.repository.ListParticipants(ctx, persistence.ListParticipantsArg{SessionID: req.SessionId})
+	if err != nil {
+		h.logger.ErrorContext(ctx, "GetSessionProbabilities h.repository.ListParticipants", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("h.repository.ListParticipants: %v", err))
+	}
+	pbSession.Participants = repoUsersToPBUsers(participants.Participants...)
+
+	if len(pbSession.Participants) == 0 {
+		return &pb.GetSessionProbabilitiesResponse{}, nil
+	}
+
+	if len(pbSession.Participants) == 1 {
+		return &pb.GetSessionProbabilitiesResponse{
+			ParticipantsProbabilities: []*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities{
+				{
+					UserId:      pbSession.Participants[0].Id,
+					Probability: 1.0,
+				},
+			},
+		}, nil
+	}
+
+	probabilities, err := h.extractor.GetProbabilities(ctx, pbSession)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("h.extractor.GetProbabilities: %v", err))
+	}
+
+	if len(probabilities) != len(pbSession.Participants) {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("len(probabilities) != len(pbSession.Participants)"))
+	}
+
+	participantProbabilities := make([]*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities, 0, len(pbSession.Participants))
+	for i, participant := range pbSession.Participants {
+		probability := probabilities[i]
+		participantProbabilities = append(participantProbabilities,
+			&pb.GetSessionProbabilitiesResponse_ParticipantProbabilities{
+				UserId:      participant.Id,
+				Probability: probability,
+			},
+		)
+	}
+
+	return &pb.GetSessionProbabilitiesResponse{ParticipantsProbabilities: participantProbabilities}, nil
+}
+
 // DeleteSession deletes a movie selection session.
 func (h *Handler) DeleteSession(ctx context.Context, req *pb.DeleteSessionRequest) (*pb.DeleteSessionResponse, error) {
 	if req.Id == "" {
@@ -351,6 +410,9 @@ func (h *Handler) AddParticipant(ctx context.Context, req *pb.AddParticipantRequ
 
 	_, err := h.repository.CreateParticipant(ctx, persistence.CreateParticipantArg{SessionID: req.SessionId, UserID: req.UserId})
 	if err != nil {
+		if errors.Is(err, persistence.ErrAlreadyExists) {
+			return &pb.AddParticipantResponse{}, nil
+		}
 		return nil, repoErrorToAPIError(err)
 	}
 
@@ -394,16 +456,16 @@ func (h *Handler) ListParticipants(ctx context.Context, req *pb.ListParticipants
 
 // AddUserMovie adds a movie to the current user's list.
 func (h *Handler) AddUserMovie(ctx context.Context, req *pb.AddUserMovieRequest) (*pb.AddUserMovieResponse, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
 	session, ok := authn.GetInfo(ctx).(auth.Session)
 	if !ok {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing session"))
 	}
 
-	if req.MovieTitle == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("movie_title is null"))
-	}
-
-	movie, err := h.repository.CreateMovie(ctx, persistence.CreateMovieArg{UserID: session.UserId, MovieTitle: req.MovieTitle})
+	movie, err := h.repository.CreateMovie(ctx, persistence.CreateMovieArg{UserID: session.UserId, MovieTitle: req.MovieTitle, Note: req.Note})
 	if err != nil {
 		return nil, repoErrorToAPIError(err)
 	}
@@ -414,8 +476,8 @@ func (h *Handler) AddUserMovie(ctx context.Context, req *pb.AddUserMovieRequest)
 
 // ListUserMovies lists movies for a user.
 func (h *Handler) ListUserMovies(ctx context.Context, req *pb.ListUserMoviesRequest) (*pb.ListUserMoviesResponse, error) {
-	if req.UserId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_id is null"))
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	listMoviesRet, err := h.repository.ListMovies(ctx, persistence.ListMoviesArg{UserID: req.UserId})

@@ -1199,6 +1199,94 @@ func (*SetSessionMovieResponse) Descriptor() ([]byte, []int) {
 	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{25}
 }
 
+type GetSessionProbabilitiesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSessionProbabilitiesRequest) Reset() {
+	*x = GetSessionProbabilitiesRequest{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSessionProbabilitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionProbabilitiesRequest) ProtoMessage() {}
+
+func (x *GetSessionProbabilitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionProbabilitiesRequest.ProtoReflect.Descriptor instead.
+func (*GetSessionProbabilitiesRequest) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetSessionProbabilitiesRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type GetSessionProbabilitiesResponse struct {
+	state                     protoimpl.MessageState                                      `protogen:"open.v1"`
+	ParticipantsProbabilities []*GetSessionProbabilitiesResponse_ParticipantProbabilities `protobuf:"bytes,1,rep,name=participants_probabilities,json=participantsProbabilities,proto3" json:"participants_probabilities,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *GetSessionProbabilitiesResponse) Reset() {
+	*x = GetSessionProbabilitiesResponse{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSessionProbabilitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionProbabilitiesResponse) ProtoMessage() {}
+
+func (x *GetSessionProbabilitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionProbabilitiesResponse.ProtoReflect.Descriptor instead.
+func (*GetSessionProbabilitiesResponse) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetSessionProbabilitiesResponse) GetParticipantsProbabilities() []*GetSessionProbabilitiesResponse_ParticipantProbabilities {
+	if x != nil {
+		return x.ParticipantsProbabilities
+	}
+	return nil
+}
+
 type DeleteSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1208,7 +1296,7 @@ type DeleteSessionRequest struct {
 
 func (x *DeleteSessionRequest) Reset() {
 	*x = DeleteSessionRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[26]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1220,7 +1308,7 @@ func (x *DeleteSessionRequest) String() string {
 func (*DeleteSessionRequest) ProtoMessage() {}
 
 func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[26]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1233,7 +1321,7 @@ func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSessionRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{26}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *DeleteSessionRequest) GetId() string {
@@ -1252,7 +1340,7 @@ type DeleteSessionResponse struct {
 
 func (x *DeleteSessionResponse) Reset() {
 	*x = DeleteSessionResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[27]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1264,7 +1352,7 @@ func (x *DeleteSessionResponse) String() string {
 func (*DeleteSessionResponse) ProtoMessage() {}
 
 func (x *DeleteSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[27]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1277,7 +1365,7 @@ func (x *DeleteSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSessionResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{27}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *DeleteSessionResponse) GetSession() *Session {
@@ -1297,7 +1385,7 @@ type AddParticipantRequest struct {
 
 func (x *AddParticipantRequest) Reset() {
 	*x = AddParticipantRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[28]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1309,7 +1397,7 @@ func (x *AddParticipantRequest) String() string {
 func (*AddParticipantRequest) ProtoMessage() {}
 
 func (x *AddParticipantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[28]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1322,7 +1410,7 @@ func (x *AddParticipantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddParticipantRequest.ProtoReflect.Descriptor instead.
 func (*AddParticipantRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{28}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *AddParticipantRequest) GetSessionId() string {
@@ -1347,7 +1435,7 @@ type AddParticipantResponse struct {
 
 func (x *AddParticipantResponse) Reset() {
 	*x = AddParticipantResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[29]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1359,7 +1447,7 @@ func (x *AddParticipantResponse) String() string {
 func (*AddParticipantResponse) ProtoMessage() {}
 
 func (x *AddParticipantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[29]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1372,7 +1460,7 @@ func (x *AddParticipantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddParticipantResponse.ProtoReflect.Descriptor instead.
 func (*AddParticipantResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{29}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{31}
 }
 
 type RemoveParticipantRequest struct {
@@ -1385,7 +1473,7 @@ type RemoveParticipantRequest struct {
 
 func (x *RemoveParticipantRequest) Reset() {
 	*x = RemoveParticipantRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[30]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1397,7 +1485,7 @@ func (x *RemoveParticipantRequest) String() string {
 func (*RemoveParticipantRequest) ProtoMessage() {}
 
 func (x *RemoveParticipantRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[30]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1410,7 +1498,7 @@ func (x *RemoveParticipantRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveParticipantRequest.ProtoReflect.Descriptor instead.
 func (*RemoveParticipantRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{30}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *RemoveParticipantRequest) GetSessionId() string {
@@ -1435,7 +1523,7 @@ type RemoveParticipantResponse struct {
 
 func (x *RemoveParticipantResponse) Reset() {
 	*x = RemoveParticipantResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[31]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1447,7 +1535,7 @@ func (x *RemoveParticipantResponse) String() string {
 func (*RemoveParticipantResponse) ProtoMessage() {}
 
 func (x *RemoveParticipantResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[31]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1460,7 +1548,7 @@ func (x *RemoveParticipantResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveParticipantResponse.ProtoReflect.Descriptor instead.
 func (*RemoveParticipantResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{31}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{33}
 }
 
 type ListParticipantsRequest struct {
@@ -1472,7 +1560,7 @@ type ListParticipantsRequest struct {
 
 func (x *ListParticipantsRequest) Reset() {
 	*x = ListParticipantsRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[32]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1484,7 +1572,7 @@ func (x *ListParticipantsRequest) String() string {
 func (*ListParticipantsRequest) ProtoMessage() {}
 
 func (x *ListParticipantsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[32]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1497,7 +1585,7 @@ func (x *ListParticipantsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParticipantsRequest.ProtoReflect.Descriptor instead.
 func (*ListParticipantsRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{32}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListParticipantsRequest) GetSessionId() string {
@@ -1516,7 +1604,7 @@ type ListParticipantsResponse struct {
 
 func (x *ListParticipantsResponse) Reset() {
 	*x = ListParticipantsResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[33]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1528,7 +1616,7 @@ func (x *ListParticipantsResponse) String() string {
 func (*ListParticipantsResponse) ProtoMessage() {}
 
 func (x *ListParticipantsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[33]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1541,7 +1629,7 @@ func (x *ListParticipantsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParticipantsResponse.ProtoReflect.Descriptor instead.
 func (*ListParticipantsResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{33}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListParticipantsResponse) GetParticipants() []*User {
@@ -1554,13 +1642,14 @@ func (x *ListParticipantsResponse) GetParticipants() []*User {
 type AddUserMovieRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MovieTitle    string                 `protobuf:"bytes,1,opt,name=movie_title,json=movieTitle,proto3" json:"movie_title,omitempty"`
+	Note          string                 `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddUserMovieRequest) Reset() {
 	*x = AddUserMovieRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[34]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1572,7 +1661,7 @@ func (x *AddUserMovieRequest) String() string {
 func (*AddUserMovieRequest) ProtoMessage() {}
 
 func (x *AddUserMovieRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[34]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1585,7 +1674,7 @@ func (x *AddUserMovieRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserMovieRequest.ProtoReflect.Descriptor instead.
 func (*AddUserMovieRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{34}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *AddUserMovieRequest) GetMovieTitle() string {
@@ -1595,17 +1684,25 @@ func (x *AddUserMovieRequest) GetMovieTitle() string {
 	return ""
 }
 
+func (x *AddUserMovieRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
 type Movie struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Note          string                 `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Movie) Reset() {
 	*x = Movie{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[35]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1617,7 +1714,7 @@ func (x *Movie) String() string {
 func (*Movie) ProtoMessage() {}
 
 func (x *Movie) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[35]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1630,7 +1727,7 @@ func (x *Movie) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Movie.ProtoReflect.Descriptor instead.
 func (*Movie) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{35}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *Movie) GetId() string {
@@ -1647,6 +1744,13 @@ func (x *Movie) GetTitle() string {
 	return ""
 }
 
+func (x *Movie) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
 type AddUserMovieResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Movie         *Movie                 `protobuf:"bytes,1,opt,name=movie,proto3" json:"movie,omitempty"`
@@ -1656,7 +1760,7 @@ type AddUserMovieResponse struct {
 
 func (x *AddUserMovieResponse) Reset() {
 	*x = AddUserMovieResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[36]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1668,7 +1772,7 @@ func (x *AddUserMovieResponse) String() string {
 func (*AddUserMovieResponse) ProtoMessage() {}
 
 func (x *AddUserMovieResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[36]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1681,7 +1785,7 @@ func (x *AddUserMovieResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddUserMovieResponse.ProtoReflect.Descriptor instead.
 func (*AddUserMovieResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{36}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *AddUserMovieResponse) GetMovie() *Movie {
@@ -1700,7 +1804,7 @@ type ListUserMoviesRequest struct {
 
 func (x *ListUserMoviesRequest) Reset() {
 	*x = ListUserMoviesRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[37]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1712,7 +1816,7 @@ func (x *ListUserMoviesRequest) String() string {
 func (*ListUserMoviesRequest) ProtoMessage() {}
 
 func (x *ListUserMoviesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[37]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1725,7 +1829,7 @@ func (x *ListUserMoviesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserMoviesRequest.ProtoReflect.Descriptor instead.
 func (*ListUserMoviesRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{37}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ListUserMoviesRequest) GetUserId() string {
@@ -1744,7 +1848,7 @@ type ListUserMoviesResponse struct {
 
 func (x *ListUserMoviesResponse) Reset() {
 	*x = ListUserMoviesResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1756,7 +1860,7 @@ func (x *ListUserMoviesResponse) String() string {
 func (*ListUserMoviesResponse) ProtoMessage() {}
 
 func (x *ListUserMoviesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1769,7 +1873,7 @@ func (x *ListUserMoviesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserMoviesResponse.ProtoReflect.Descriptor instead.
 func (*ListUserMoviesResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{38}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ListUserMoviesResponse) GetMovies() []*Movie {
@@ -1788,7 +1892,7 @@ type DeleteUserMovieRequest struct {
 
 func (x *DeleteUserMovieRequest) Reset() {
 	*x = DeleteUserMovieRequest{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1800,7 +1904,7 @@ func (x *DeleteUserMovieRequest) String() string {
 func (*DeleteUserMovieRequest) ProtoMessage() {}
 
 func (x *DeleteUserMovieRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1813,7 +1917,7 @@ func (x *DeleteUserMovieRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserMovieRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserMovieRequest) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{39}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *DeleteUserMovieRequest) GetId() string {
@@ -1831,7 +1935,7 @@ type DeleteUserMovieResponse struct {
 
 func (x *DeleteUserMovieResponse) Reset() {
 	*x = DeleteUserMovieResponse{}
-	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1843,7 +1947,7 @@ func (x *DeleteUserMovieResponse) String() string {
 func (*DeleteUserMovieResponse) ProtoMessage() {}
 
 func (x *DeleteUserMovieResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
+	mi := &file_gateway_v1_gateway_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1856,7 +1960,59 @@ func (x *DeleteUserMovieResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserMovieResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserMovieResponse) Descriptor() ([]byte, []int) {
-	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{40}
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{42}
+}
+
+type GetSessionProbabilitiesResponse_ParticipantProbabilities struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Probability   float64                `protobuf:"fixed64,2,opt,name=probability,proto3" json:"probability,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSessionProbabilitiesResponse_ParticipantProbabilities) Reset() {
+	*x = GetSessionProbabilitiesResponse_ParticipantProbabilities{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSessionProbabilitiesResponse_ParticipantProbabilities) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSessionProbabilitiesResponse_ParticipantProbabilities) ProtoMessage() {}
+
+func (x *GetSessionProbabilitiesResponse_ParticipantProbabilities) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSessionProbabilitiesResponse_ParticipantProbabilities.ProtoReflect.Descriptor instead.
+func (*GetSessionProbabilitiesResponse_ParticipantProbabilities) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{27, 0}
+}
+
+func (x *GetSessionProbabilitiesResponse_ParticipantProbabilities) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GetSessionProbabilitiesResponse_ParticipantProbabilities) GetProbability() float64 {
+	if x != nil {
+		return x.Probability
+	}
+	return 0
 }
 
 var File_gateway_v1_gateway_proto protoreflect.FileDescriptor
@@ -1929,7 +2085,16 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tsessionId\x12%\n" +
 	"\bmovie_id\x18\x02 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\amovieId\"\x19\n" +
-	"\x17SetSessionMovieResponse\"2\n" +
+	"\x17SetSessionMovieResponse\"K\n" +
+	"\x1eGetSessionProbabilitiesRequest\x12)\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tB\n" +
+	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tsessionId\"\xfe\x01\n" +
+	"\x1fGetSessionProbabilitiesResponse\x12\x83\x01\n" +
+	"\x1aparticipants_probabilities\x18\x01 \x03(\v2D.gateway.v1.GetSessionProbabilitiesResponse.ParticipantProbabilitiesR\x19participantsProbabilities\x1aU\n" +
+	"\x18ParticipantProbabilities\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12 \n" +
+	"\vprobability\x18\x02 \x01(\x01R\vprobability\"2\n" +
 	"\x14DeleteSessionRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\"F\n" +
@@ -1954,14 +2119,16 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"session_id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\tsessionId\"P\n" +
 	"\x18ListParticipantsResponse\x124\n" +
-	"\fparticipants\x18\x01 \x03(\v2\x10.gateway.v1.UserR\fparticipants\"B\n" +
+	"\fparticipants\x18\x01 \x03(\v2\x10.gateway.v1.UserR\fparticipants\"V\n" +
 	"\x13AddUserMovieRequest\x12+\n" +
 	"\vmovie_title\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\n" +
-	"movieTitle\"-\n" +
+	"movieTitle\x12\x12\n" +
+	"\x04note\x18\x02 \x01(\tR\x04note\"A\n" +
 	"\x05Movie\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"?\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\"?\n" +
 	"\x14AddUserMovieResponse\x12'\n" +
 	"\x05movie\x18\x01 \x01(\v2\x11.gateway.v1.MovieR\x05movie\"<\n" +
 	"\x15ListUserMoviesRequest\x12#\n" +
@@ -1972,7 +2139,7 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\x16DeleteUserMovieRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\"\x19\n" +
-	"\x17DeleteUserMovieResponse2\xb0\f\n" +
+	"\x17DeleteUserMovieResponse2\xa4\r\n" +
 	"\x0eGatewayService\x12]\n" +
 	"\x10CreateInvitation\x12#.gateway.v1.CreateInvitationRequest\x1a$.gateway.v1.CreateInvitationResponse\x12?\n" +
 	"\x06SignUp\x12\x19.gateway.v1.SignUpRequest\x1a\x1a.gateway.v1.SignUpResponse\x12?\n" +
@@ -1989,7 +2156,8 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"GetSession\x12\x1d.gateway.v1.GetSessionRequest\x1a\x1e.gateway.v1.GetSessionResponse\x12K\n" +
 	"\n" +
 	"EndSession\x12\x1d.gateway.v1.EndSessionRequest\x1a\x1e.gateway.v1.EndSessionResponse\x12Z\n" +
-	"\x0fSetSessionMovie\x12\".gateway.v1.SetSessionMovieRequest\x1a#.gateway.v1.SetSessionMovieResponse\x12T\n" +
+	"\x0fSetSessionMovie\x12\".gateway.v1.SetSessionMovieRequest\x1a#.gateway.v1.SetSessionMovieResponse\x12r\n" +
+	"\x17GetSessionProbabilities\x12*.gateway.v1.GetSessionProbabilitiesRequest\x1a+.gateway.v1.GetSessionProbabilitiesResponse\x12T\n" +
 	"\rDeleteSession\x12 .gateway.v1.DeleteSessionRequest\x1a!.gateway.v1.DeleteSessionResponse\x12W\n" +
 	"\x0eAddParticipant\x12!.gateway.v1.AddParticipantRequest\x1a\".gateway.v1.AddParticipantResponse\x12`\n" +
 	"\x11RemoveParticipant\x12$.gateway.v1.RemoveParticipantRequest\x1a%.gateway.v1.RemoveParticipantResponse\x12]\n" +
@@ -2013,111 +2181,117 @@ func file_gateway_v1_gateway_proto_rawDescGZIP() []byte {
 	return file_gateway_v1_gateway_proto_rawDescData
 }
 
-var file_gateway_v1_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_gateway_v1_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_gateway_v1_gateway_proto_goTypes = []any{
-	(*CreateInvitationRequest)(nil),   // 0: gateway.v1.CreateInvitationRequest
-	(*CreateInvitationResponse)(nil),  // 1: gateway.v1.CreateInvitationResponse
-	(*SignUpRequest)(nil),             // 2: gateway.v1.SignUpRequest
-	(*SignUpResponse)(nil),            // 3: gateway.v1.SignUpResponse
-	(*SignInRequest)(nil),             // 4: gateway.v1.SignInRequest
-	(*SignInResponse)(nil),            // 5: gateway.v1.SignInResponse
-	(*SignOutRequest)(nil),            // 6: gateway.v1.SignOutRequest
-	(*SignOutResponse)(nil),           // 7: gateway.v1.SignOutResponse
-	(*User)(nil),                      // 8: gateway.v1.User
-	(*ListUsersRequest)(nil),          // 9: gateway.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),         // 10: gateway.v1.ListUsersResponse
-	(*UpdateUserRequest)(nil),         // 11: gateway.v1.UpdateUserRequest
-	(*UpdateUserResponse)(nil),        // 12: gateway.v1.UpdateUserResponse
-	(*DeleteUserRequest)(nil),         // 13: gateway.v1.DeleteUserRequest
-	(*DeleteUserResponse)(nil),        // 14: gateway.v1.DeleteUserResponse
-	(*CreateSessionRequest)(nil),      // 15: gateway.v1.CreateSessionRequest
-	(*CreateSessionResponse)(nil),     // 16: gateway.v1.CreateSessionResponse
-	(*Session)(nil),                   // 17: gateway.v1.Session
-	(*ListSessionsRequest)(nil),       // 18: gateway.v1.ListSessionsRequest
-	(*ListSessionsResponse)(nil),      // 19: gateway.v1.ListSessionsResponse
-	(*GetSessionRequest)(nil),         // 20: gateway.v1.GetSessionRequest
-	(*GetSessionResponse)(nil),        // 21: gateway.v1.GetSessionResponse
-	(*EndSessionRequest)(nil),         // 22: gateway.v1.EndSessionRequest
-	(*EndSessionResponse)(nil),        // 23: gateway.v1.EndSessionResponse
-	(*SetSessionMovieRequest)(nil),    // 24: gateway.v1.SetSessionMovieRequest
-	(*SetSessionMovieResponse)(nil),   // 25: gateway.v1.SetSessionMovieResponse
-	(*DeleteSessionRequest)(nil),      // 26: gateway.v1.DeleteSessionRequest
-	(*DeleteSessionResponse)(nil),     // 27: gateway.v1.DeleteSessionResponse
-	(*AddParticipantRequest)(nil),     // 28: gateway.v1.AddParticipantRequest
-	(*AddParticipantResponse)(nil),    // 29: gateway.v1.AddParticipantResponse
-	(*RemoveParticipantRequest)(nil),  // 30: gateway.v1.RemoveParticipantRequest
-	(*RemoveParticipantResponse)(nil), // 31: gateway.v1.RemoveParticipantResponse
-	(*ListParticipantsRequest)(nil),   // 32: gateway.v1.ListParticipantsRequest
-	(*ListParticipantsResponse)(nil),  // 33: gateway.v1.ListParticipantsResponse
-	(*AddUserMovieRequest)(nil),       // 34: gateway.v1.AddUserMovieRequest
-	(*Movie)(nil),                     // 35: gateway.v1.Movie
-	(*AddUserMovieResponse)(nil),      // 36: gateway.v1.AddUserMovieResponse
-	(*ListUserMoviesRequest)(nil),     // 37: gateway.v1.ListUserMoviesRequest
-	(*ListUserMoviesResponse)(nil),    // 38: gateway.v1.ListUserMoviesResponse
-	(*DeleteUserMovieRequest)(nil),    // 39: gateway.v1.DeleteUserMovieRequest
-	(*DeleteUserMovieResponse)(nil),   // 40: gateway.v1.DeleteUserMovieResponse
-	(*timestamppb.Timestamp)(nil),     // 41: google.protobuf.Timestamp
+	(*CreateInvitationRequest)(nil),                                  // 0: gateway.v1.CreateInvitationRequest
+	(*CreateInvitationResponse)(nil),                                 // 1: gateway.v1.CreateInvitationResponse
+	(*SignUpRequest)(nil),                                            // 2: gateway.v1.SignUpRequest
+	(*SignUpResponse)(nil),                                           // 3: gateway.v1.SignUpResponse
+	(*SignInRequest)(nil),                                            // 4: gateway.v1.SignInRequest
+	(*SignInResponse)(nil),                                           // 5: gateway.v1.SignInResponse
+	(*SignOutRequest)(nil),                                           // 6: gateway.v1.SignOutRequest
+	(*SignOutResponse)(nil),                                          // 7: gateway.v1.SignOutResponse
+	(*User)(nil),                                                     // 8: gateway.v1.User
+	(*ListUsersRequest)(nil),                                         // 9: gateway.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),                                        // 10: gateway.v1.ListUsersResponse
+	(*UpdateUserRequest)(nil),                                        // 11: gateway.v1.UpdateUserRequest
+	(*UpdateUserResponse)(nil),                                       // 12: gateway.v1.UpdateUserResponse
+	(*DeleteUserRequest)(nil),                                        // 13: gateway.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),                                       // 14: gateway.v1.DeleteUserResponse
+	(*CreateSessionRequest)(nil),                                     // 15: gateway.v1.CreateSessionRequest
+	(*CreateSessionResponse)(nil),                                    // 16: gateway.v1.CreateSessionResponse
+	(*Session)(nil),                                                  // 17: gateway.v1.Session
+	(*ListSessionsRequest)(nil),                                      // 18: gateway.v1.ListSessionsRequest
+	(*ListSessionsResponse)(nil),                                     // 19: gateway.v1.ListSessionsResponse
+	(*GetSessionRequest)(nil),                                        // 20: gateway.v1.GetSessionRequest
+	(*GetSessionResponse)(nil),                                       // 21: gateway.v1.GetSessionResponse
+	(*EndSessionRequest)(nil),                                        // 22: gateway.v1.EndSessionRequest
+	(*EndSessionResponse)(nil),                                       // 23: gateway.v1.EndSessionResponse
+	(*SetSessionMovieRequest)(nil),                                   // 24: gateway.v1.SetSessionMovieRequest
+	(*SetSessionMovieResponse)(nil),                                  // 25: gateway.v1.SetSessionMovieResponse
+	(*GetSessionProbabilitiesRequest)(nil),                           // 26: gateway.v1.GetSessionProbabilitiesRequest
+	(*GetSessionProbabilitiesResponse)(nil),                          // 27: gateway.v1.GetSessionProbabilitiesResponse
+	(*DeleteSessionRequest)(nil),                                     // 28: gateway.v1.DeleteSessionRequest
+	(*DeleteSessionResponse)(nil),                                    // 29: gateway.v1.DeleteSessionResponse
+	(*AddParticipantRequest)(nil),                                    // 30: gateway.v1.AddParticipantRequest
+	(*AddParticipantResponse)(nil),                                   // 31: gateway.v1.AddParticipantResponse
+	(*RemoveParticipantRequest)(nil),                                 // 32: gateway.v1.RemoveParticipantRequest
+	(*RemoveParticipantResponse)(nil),                                // 33: gateway.v1.RemoveParticipantResponse
+	(*ListParticipantsRequest)(nil),                                  // 34: gateway.v1.ListParticipantsRequest
+	(*ListParticipantsResponse)(nil),                                 // 35: gateway.v1.ListParticipantsResponse
+	(*AddUserMovieRequest)(nil),                                      // 36: gateway.v1.AddUserMovieRequest
+	(*Movie)(nil),                                                    // 37: gateway.v1.Movie
+	(*AddUserMovieResponse)(nil),                                     // 38: gateway.v1.AddUserMovieResponse
+	(*ListUserMoviesRequest)(nil),                                    // 39: gateway.v1.ListUserMoviesRequest
+	(*ListUserMoviesResponse)(nil),                                   // 40: gateway.v1.ListUserMoviesResponse
+	(*DeleteUserMovieRequest)(nil),                                   // 41: gateway.v1.DeleteUserMovieRequest
+	(*DeleteUserMovieResponse)(nil),                                  // 42: gateway.v1.DeleteUserMovieResponse
+	(*GetSessionProbabilitiesResponse_ParticipantProbabilities)(nil), // 43: gateway.v1.GetSessionProbabilitiesResponse.ParticipantProbabilities
+	(*timestamppb.Timestamp)(nil),                                    // 44: google.protobuf.Timestamp
 }
 var file_gateway_v1_gateway_proto_depIdxs = []int32{
-	41, // 0: gateway.v1.CreateInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	44, // 0: gateway.v1.CreateInvitationResponse.expires_at:type_name -> google.protobuf.Timestamp
 	8,  // 1: gateway.v1.ListUsersResponse.users:type_name -> gateway.v1.User
 	8,  // 2: gateway.v1.UpdateUserResponse.user:type_name -> gateway.v1.User
 	8,  // 3: gateway.v1.DeleteUserResponse.user:type_name -> gateway.v1.User
 	17, // 4: gateway.v1.CreateSessionResponse.session:type_name -> gateway.v1.Session
-	41, // 5: gateway.v1.Session.created_at:type_name -> google.protobuf.Timestamp
-	41, // 6: gateway.v1.Session.closed_at:type_name -> google.protobuf.Timestamp
+	44, // 5: gateway.v1.Session.created_at:type_name -> google.protobuf.Timestamp
+	44, // 6: gateway.v1.Session.closed_at:type_name -> google.protobuf.Timestamp
 	8,  // 7: gateway.v1.Session.participants:type_name -> gateway.v1.User
 	8,  // 8: gateway.v1.Session.winner:type_name -> gateway.v1.User
 	17, // 9: gateway.v1.ListSessionsResponse.sessions:type_name -> gateway.v1.Session
 	17, // 10: gateway.v1.GetSessionResponse.session:type_name -> gateway.v1.Session
 	8,  // 11: gateway.v1.EndSessionResponse.winner:type_name -> gateway.v1.User
-	17, // 12: gateway.v1.DeleteSessionResponse.session:type_name -> gateway.v1.Session
-	8,  // 13: gateway.v1.ListParticipantsResponse.participants:type_name -> gateway.v1.User
-	35, // 14: gateway.v1.AddUserMovieResponse.movie:type_name -> gateway.v1.Movie
-	35, // 15: gateway.v1.ListUserMoviesResponse.movies:type_name -> gateway.v1.Movie
-	0,  // 16: gateway.v1.GatewayService.CreateInvitation:input_type -> gateway.v1.CreateInvitationRequest
-	2,  // 17: gateway.v1.GatewayService.SignUp:input_type -> gateway.v1.SignUpRequest
-	4,  // 18: gateway.v1.GatewayService.SignIn:input_type -> gateway.v1.SignInRequest
-	6,  // 19: gateway.v1.GatewayService.SignOut:input_type -> gateway.v1.SignOutRequest
-	9,  // 20: gateway.v1.GatewayService.ListUsers:input_type -> gateway.v1.ListUsersRequest
-	11, // 21: gateway.v1.GatewayService.UpdateUser:input_type -> gateway.v1.UpdateUserRequest
-	13, // 22: gateway.v1.GatewayService.DeleteUser:input_type -> gateway.v1.DeleteUserRequest
-	15, // 23: gateway.v1.GatewayService.CreateSession:input_type -> gateway.v1.CreateSessionRequest
-	18, // 24: gateway.v1.GatewayService.ListSessions:input_type -> gateway.v1.ListSessionsRequest
-	20, // 25: gateway.v1.GatewayService.GetSession:input_type -> gateway.v1.GetSessionRequest
-	22, // 26: gateway.v1.GatewayService.EndSession:input_type -> gateway.v1.EndSessionRequest
-	24, // 27: gateway.v1.GatewayService.SetSessionMovie:input_type -> gateway.v1.SetSessionMovieRequest
-	26, // 28: gateway.v1.GatewayService.DeleteSession:input_type -> gateway.v1.DeleteSessionRequest
-	28, // 29: gateway.v1.GatewayService.AddParticipant:input_type -> gateway.v1.AddParticipantRequest
-	30, // 30: gateway.v1.GatewayService.RemoveParticipant:input_type -> gateway.v1.RemoveParticipantRequest
-	32, // 31: gateway.v1.GatewayService.ListParticipants:input_type -> gateway.v1.ListParticipantsRequest
-	34, // 32: gateway.v1.GatewayService.AddUserMovie:input_type -> gateway.v1.AddUserMovieRequest
-	37, // 33: gateway.v1.GatewayService.ListUserMovies:input_type -> gateway.v1.ListUserMoviesRequest
-	39, // 34: gateway.v1.GatewayService.DeleteUserMovie:input_type -> gateway.v1.DeleteUserMovieRequest
-	1,  // 35: gateway.v1.GatewayService.CreateInvitation:output_type -> gateway.v1.CreateInvitationResponse
-	3,  // 36: gateway.v1.GatewayService.SignUp:output_type -> gateway.v1.SignUpResponse
-	5,  // 37: gateway.v1.GatewayService.SignIn:output_type -> gateway.v1.SignInResponse
-	7,  // 38: gateway.v1.GatewayService.SignOut:output_type -> gateway.v1.SignOutResponse
-	10, // 39: gateway.v1.GatewayService.ListUsers:output_type -> gateway.v1.ListUsersResponse
-	12, // 40: gateway.v1.GatewayService.UpdateUser:output_type -> gateway.v1.UpdateUserResponse
-	14, // 41: gateway.v1.GatewayService.DeleteUser:output_type -> gateway.v1.DeleteUserResponse
-	16, // 42: gateway.v1.GatewayService.CreateSession:output_type -> gateway.v1.CreateSessionResponse
-	19, // 43: gateway.v1.GatewayService.ListSessions:output_type -> gateway.v1.ListSessionsResponse
-	21, // 44: gateway.v1.GatewayService.GetSession:output_type -> gateway.v1.GetSessionResponse
-	23, // 45: gateway.v1.GatewayService.EndSession:output_type -> gateway.v1.EndSessionResponse
-	25, // 46: gateway.v1.GatewayService.SetSessionMovie:output_type -> gateway.v1.SetSessionMovieResponse
-	27, // 47: gateway.v1.GatewayService.DeleteSession:output_type -> gateway.v1.DeleteSessionResponse
-	29, // 48: gateway.v1.GatewayService.AddParticipant:output_type -> gateway.v1.AddParticipantResponse
-	31, // 49: gateway.v1.GatewayService.RemoveParticipant:output_type -> gateway.v1.RemoveParticipantResponse
-	33, // 50: gateway.v1.GatewayService.ListParticipants:output_type -> gateway.v1.ListParticipantsResponse
-	36, // 51: gateway.v1.GatewayService.AddUserMovie:output_type -> gateway.v1.AddUserMovieResponse
-	38, // 52: gateway.v1.GatewayService.ListUserMovies:output_type -> gateway.v1.ListUserMoviesResponse
-	40, // 53: gateway.v1.GatewayService.DeleteUserMovie:output_type -> gateway.v1.DeleteUserMovieResponse
-	35, // [35:54] is the sub-list for method output_type
-	16, // [16:35] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	43, // 12: gateway.v1.GetSessionProbabilitiesResponse.participants_probabilities:type_name -> gateway.v1.GetSessionProbabilitiesResponse.ParticipantProbabilities
+	17, // 13: gateway.v1.DeleteSessionResponse.session:type_name -> gateway.v1.Session
+	8,  // 14: gateway.v1.ListParticipantsResponse.participants:type_name -> gateway.v1.User
+	37, // 15: gateway.v1.AddUserMovieResponse.movie:type_name -> gateway.v1.Movie
+	37, // 16: gateway.v1.ListUserMoviesResponse.movies:type_name -> gateway.v1.Movie
+	0,  // 17: gateway.v1.GatewayService.CreateInvitation:input_type -> gateway.v1.CreateInvitationRequest
+	2,  // 18: gateway.v1.GatewayService.SignUp:input_type -> gateway.v1.SignUpRequest
+	4,  // 19: gateway.v1.GatewayService.SignIn:input_type -> gateway.v1.SignInRequest
+	6,  // 20: gateway.v1.GatewayService.SignOut:input_type -> gateway.v1.SignOutRequest
+	9,  // 21: gateway.v1.GatewayService.ListUsers:input_type -> gateway.v1.ListUsersRequest
+	11, // 22: gateway.v1.GatewayService.UpdateUser:input_type -> gateway.v1.UpdateUserRequest
+	13, // 23: gateway.v1.GatewayService.DeleteUser:input_type -> gateway.v1.DeleteUserRequest
+	15, // 24: gateway.v1.GatewayService.CreateSession:input_type -> gateway.v1.CreateSessionRequest
+	18, // 25: gateway.v1.GatewayService.ListSessions:input_type -> gateway.v1.ListSessionsRequest
+	20, // 26: gateway.v1.GatewayService.GetSession:input_type -> gateway.v1.GetSessionRequest
+	22, // 27: gateway.v1.GatewayService.EndSession:input_type -> gateway.v1.EndSessionRequest
+	24, // 28: gateway.v1.GatewayService.SetSessionMovie:input_type -> gateway.v1.SetSessionMovieRequest
+	26, // 29: gateway.v1.GatewayService.GetSessionProbabilities:input_type -> gateway.v1.GetSessionProbabilitiesRequest
+	28, // 30: gateway.v1.GatewayService.DeleteSession:input_type -> gateway.v1.DeleteSessionRequest
+	30, // 31: gateway.v1.GatewayService.AddParticipant:input_type -> gateway.v1.AddParticipantRequest
+	32, // 32: gateway.v1.GatewayService.RemoveParticipant:input_type -> gateway.v1.RemoveParticipantRequest
+	34, // 33: gateway.v1.GatewayService.ListParticipants:input_type -> gateway.v1.ListParticipantsRequest
+	36, // 34: gateway.v1.GatewayService.AddUserMovie:input_type -> gateway.v1.AddUserMovieRequest
+	39, // 35: gateway.v1.GatewayService.ListUserMovies:input_type -> gateway.v1.ListUserMoviesRequest
+	41, // 36: gateway.v1.GatewayService.DeleteUserMovie:input_type -> gateway.v1.DeleteUserMovieRequest
+	1,  // 37: gateway.v1.GatewayService.CreateInvitation:output_type -> gateway.v1.CreateInvitationResponse
+	3,  // 38: gateway.v1.GatewayService.SignUp:output_type -> gateway.v1.SignUpResponse
+	5,  // 39: gateway.v1.GatewayService.SignIn:output_type -> gateway.v1.SignInResponse
+	7,  // 40: gateway.v1.GatewayService.SignOut:output_type -> gateway.v1.SignOutResponse
+	10, // 41: gateway.v1.GatewayService.ListUsers:output_type -> gateway.v1.ListUsersResponse
+	12, // 42: gateway.v1.GatewayService.UpdateUser:output_type -> gateway.v1.UpdateUserResponse
+	14, // 43: gateway.v1.GatewayService.DeleteUser:output_type -> gateway.v1.DeleteUserResponse
+	16, // 44: gateway.v1.GatewayService.CreateSession:output_type -> gateway.v1.CreateSessionResponse
+	19, // 45: gateway.v1.GatewayService.ListSessions:output_type -> gateway.v1.ListSessionsResponse
+	21, // 46: gateway.v1.GatewayService.GetSession:output_type -> gateway.v1.GetSessionResponse
+	23, // 47: gateway.v1.GatewayService.EndSession:output_type -> gateway.v1.EndSessionResponse
+	25, // 48: gateway.v1.GatewayService.SetSessionMovie:output_type -> gateway.v1.SetSessionMovieResponse
+	27, // 49: gateway.v1.GatewayService.GetSessionProbabilities:output_type -> gateway.v1.GetSessionProbabilitiesResponse
+	29, // 50: gateway.v1.GatewayService.DeleteSession:output_type -> gateway.v1.DeleteSessionResponse
+	31, // 51: gateway.v1.GatewayService.AddParticipant:output_type -> gateway.v1.AddParticipantResponse
+	33, // 52: gateway.v1.GatewayService.RemoveParticipant:output_type -> gateway.v1.RemoveParticipantResponse
+	35, // 53: gateway.v1.GatewayService.ListParticipants:output_type -> gateway.v1.ListParticipantsResponse
+	38, // 54: gateway.v1.GatewayService.AddUserMovie:output_type -> gateway.v1.AddUserMovieResponse
+	40, // 55: gateway.v1.GatewayService.ListUserMovies:output_type -> gateway.v1.ListUserMoviesResponse
+	42, // 56: gateway.v1.GatewayService.DeleteUserMovie:output_type -> gateway.v1.DeleteUserMovieResponse
+	37, // [37:57] is the sub-list for method output_type
+	17, // [17:37] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_gateway_v1_gateway_proto_init() }
@@ -2131,7 +2305,7 @@ func file_gateway_v1_gateway_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gateway_v1_gateway_proto_rawDesc), len(file_gateway_v1_gateway_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   41,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

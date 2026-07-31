@@ -9,57 +9,30 @@ import (
 	"time"
 
 	"github.com/stiflerGit/moviehat/internal/auth/persistence"
+	tx "github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"github.com/google/uuid"
 	sqlite "modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
-type executor interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
-}
-
 // Storage stores authentication data in SQLite.
 type Storage struct {
-	db       *sql.DB
-	executor executor
+	txManager *tx.Manager
 }
 
 var _ persistence.TransactionalStorage = (*Storage)(nil)
 
 // New creates a SQLite authentication storage.
-func New(db *sql.DB) *Storage {
-	return &Storage{db: db, executor: db}
+func New(txManager *tx.Manager) *Storage {
+	return &Storage{txManager: txManager}
 }
 
 // WithTx executes authentication storage operations in a transaction.
 func (s Storage) WithTx(ctx context.Context, fn func(context.Context, persistence.Storage) error) error {
-	if fn == nil {
-		return errors.New("fn is nil")
-	}
-
-	if _, ok := s.executor.(*sql.Tx); ok {
-		// already inside a transaction
+	return s.txManager.WithTx(ctx, func(ctx context.Context) error {
 		return fn(ctx, s)
-	}
-
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("s.db.BeginTx: %w", err)
-	}
-	defer tx.Rollback()
-
-	storage := &Storage{db: s.db, executor: tx}
-	if err = fn(ctx, storage); err != nil {
-		return fmt.Errorf("executing function in transaction: %w", err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("tx.Commit(): %w", err)
-	}
-
-	return nil
+	})
 }
 
 // InsertUser creates an auth user.
@@ -68,7 +41,7 @@ func (s Storage) InsertUser(ctx context.Context, in persistence.InsertUserArg) (
 
 	uuid := uuid.NewString()
 	now := time.Now()
-	res, err := s.executor.ExecContext(ctx, query, uuid, in.Email, in.HashedPassword, now)
+	res, err := s.txManager.Executor(ctx).ExecContext(ctx, query, uuid, in.Email, in.HashedPassword, now)
 	if err != nil {
 		if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
@@ -119,7 +92,7 @@ func (s Storage) GetUser(ctx context.Context, in persistence.GetUserArg) (persis
 	query := fmt.Sprintf(`SELECT id, email, hashed_password, created_at FROM auth_users WHERE %s`, strings.Join(whereStmts, " AND "))
 
 	var user persistence.User
-	err := s.executor.QueryRowContext(ctx, query, whereArgs...).Scan(&user.ID, &user.Email, &user.HashedPassword, &user.CreatedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, whereArgs...).Scan(&user.ID, &user.Email, &user.HashedPassword, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.GetUserRet{}, persistence.ErrNotFound
@@ -142,7 +115,7 @@ func (s Storage) InsertSession(ctx context.Context, in persistence.InsertSession
 		ExpiresAt: in.ExpiresAt,
 	}
 
-	_, err := s.executor.ExecContext(ctx, query, session.ID, session.Token, session.UserID, session.CreatedAt, session.ExpiresAt)
+	_, err := s.txManager.Executor(ctx).ExecContext(ctx, query, session.ID, session.Token, session.UserID, session.CreatedAt, session.ExpiresAt)
 	if err != nil {
 		if sqliteErr, ok := errors.AsType[*sqlite.Error](err); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
@@ -179,7 +152,7 @@ func (s Storage) GetSession(ctx context.Context, in persistence.GetSessionArg) (
 
 	where := strings.Join(whereStmts, " AND ")
 	query := fmt.Sprintf(`SELECT id, token, user_id, created_at, expires_at, last_access FROM auth_sessions WHERE %s`, where)
-	err := s.executor.QueryRowContext(ctx, query, whereArgs...).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, whereArgs...).
 		Scan(&session.ID, &session.Token, &session.UserID, &session.CreatedAt, &expiresAt, &lastAccess)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -223,7 +196,7 @@ func (s Storage) UpdateSession(ctx context.Context, in persistence.UpdateSession
 	query := fmt.Sprintf(`UPDATE auth_sessions SET %s WHERE id=? RETURNING id, token, user_id, created_at, expires_at, last_access`, set)
 	args := append(setArgs, in.ID)
 
-	err := s.executor.QueryRowContext(ctx, query, args...).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).
 		Scan(&session.ID, &session.Token, &session.UserID, &session.CreatedAt, &session.ExpiresAt, &lastAccess)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -246,7 +219,7 @@ func (s Storage) DeleteUser(ctx context.Context, in persistence.DeleteUserArg) (
 	const query = `DELETE FROM auth_users WHERE id=? RETURNING id, email, hashed_password, created_at`
 
 	var user persistence.User
-	err := s.executor.QueryRowContext(ctx, query, in.UserID).Scan(&user.ID, &user.Email, &user.HashedPassword, &user.CreatedAt)
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.UserID).Scan(&user.ID, &user.Email, &user.HashedPassword, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return persistence.DeleteUserRet{}, persistence.ErrNotFound
@@ -266,7 +239,7 @@ func (s Storage) InsertVerification(ctx context.Context, in persistence.InsertVe
 
 	var verification persistence.Verification
 	var authorID sql.NullString
-	err := s.executor.QueryRowContext(ctx, query, in.TokenHash, in.ExpiresAt, in.MaxUses, 0, in.AuthorID).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.TokenHash, in.ExpiresAt, in.MaxUses, 0, in.AuthorID).
 		Scan(&verification.TokenHash, &verification.ExpiresAt, &verification.MaxUses, &verification.UsesCount, &authorID)
 	if err != nil {
 		// a conflict of token hash is too rare so we don't check the error and we return
@@ -288,7 +261,7 @@ func (s Storage) GetVerification(ctx context.Context, in persistence.GetVerifica
 	var verification persistence.Verification
 	var authorID sql.NullString
 
-	err := s.executor.QueryRowContext(ctx, query, in.TokenHash).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.TokenHash).
 		Scan(&verification.TokenHash, &verification.ExpiresAt, &verification.MaxUses, &verification.UsesCount, &authorID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -321,7 +294,7 @@ func (s Storage) UpdateVerification(ctx context.Context, in persistence.UpdateVe
 	set := strings.Join(setStmts, ", ")
 	args := append(setArgs, in.TokenHash)
 	query := fmt.Sprintf(`UPDATE auth_verifications SET %s WHERE token_hash=? RETURNING token_hash, expires_at, max_uses, uses_count, author_id`, set)
-	err := s.executor.QueryRowContext(ctx, query, args...).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).
 		Scan(&verification.TokenHash, &verification.ExpiresAt, &verification.MaxUses, &verification.UsesCount, &authorID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -350,7 +323,7 @@ func (s Storage) ConsumeVerification(ctx context.Context, in persistence.Consume
 	var verification persistence.Verification
 	var authorID sql.NullString
 
-	err := s.executor.QueryRowContext(ctx, query, in.TokenHash, time.Now()).
+	err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, in.TokenHash, time.Now()).
 		Scan(&verification.TokenHash, &verification.ExpiresAt, &verification.MaxUses, &verification.UsesCount, &authorID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
