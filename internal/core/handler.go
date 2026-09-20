@@ -9,7 +9,7 @@ import (
 	"buf.build/go/protovalidate"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth"
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
 
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
@@ -24,19 +24,33 @@ type Extractor interface {
 	StoreExtraction(ctx context.Context, session *pb.Session) error
 }
 
+// MovieSearchEngine ...
+//
+//go:generate mockgen -package mocks -destination mocks/movie_search_engine.go . MovieSearchEngine
+type MovieSearchEngine interface {
+	Search(context.Context, *pb.SearchMovieRequest) (*pb.SearchMovieResponse, error)
+	GetByID(ctx context.Context, id string) (*pb.Movie, error)
+}
+
 // Handler provides MovieHat user, movie, and session operations.
 type Handler struct {
-	repository persistence.TransactionalStorage
-	extractor  Extractor
-	logger     *slog.Logger
+	repository        persistence.TransactionalStorage
+	extractor         Extractor
+	movieSearchEngine MovieSearchEngine
+	logger            *slog.Logger
 }
 
 // New creates a MovieHat handler.
-func New(repository persistence.TransactionalStorage, extractionHandler Extractor, options ...Option) *Handler {
+func New(
+	repository persistence.TransactionalStorage,
+	extractionHandler Extractor,
+	movieSearchEngine MovieSearchEngine,
+	options ...Option) *Handler {
 	h := &Handler{
-		repository: repository,
-		extractor:  extractionHandler,
-		logger:     slog.Default().With("component", "server"),
+		repository:        repository,
+		extractor:         extractionHandler,
+		movieSearchEngine: movieSearchEngine,
+		logger:            slog.Default().With("component", "server"),
 	}
 
 	for _, opt := range options {
@@ -299,7 +313,7 @@ func (h *Handler) SetSessionMovie(ctx context.Context, req *pb.SetSessionMovieRe
 
 		if session.WatchedMovieID != "" {
 			status := persistence.MovieStatusPending
-			if _, err = s.UpdateMovie(ctx, persistence.UpdateMovieArg{ID: session.WatchedMovieID, Status: &status}); err != nil {
+			if err = s.UpdateMovies(ctx, persistence.UpdateMoviesArg{ID: session.WatchedMovieID, Status: &status}); err != nil {
 				return fmt.Errorf("s.UpdateMovie(previous watched movie): %w", err)
 			}
 		}
@@ -309,8 +323,8 @@ func (h *Handler) SetSessionMovie(ctx context.Context, req *pb.SetSessionMovieRe
 		}
 
 		status := persistence.MovieStatusWatched
-		if _, err = s.UpdateMovie(ctx, persistence.UpdateMovieArg{ID: req.MovieId, Status: &status}); err != nil {
-			return fmt.Errorf("s.UpdateMovie(selected movie): %w", err)
+		if err = s.UpdateMovies(ctx, persistence.UpdateMoviesArg{ID: req.MovieId, Status: &status}); err != nil {
+			return fmt.Errorf("s.UpdateMovies(selected movie): %w", err)
 		}
 		return nil
 	})
@@ -465,13 +479,23 @@ func (h *Handler) AddUserMovie(ctx context.Context, req *pb.AddUserMovieRequest)
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing session"))
 	}
 
-	movie, err := h.repository.CreateMovie(ctx, persistence.CreateMovieArg{UserID: session.UserId, MovieTitle: req.MovieTitle, Note: req.Note})
+	// verify that movie with that ID exists
+	movie, err := h.movieSearchEngine.GetByID(ctx, req.GetMovieId())
 	if err != nil {
 		return nil, repoErrorToAPIError(err)
 	}
 
+	h.logger.InfoContext(ctx, "movie found", "movie", movie.String())
+
+	movieDB, err := h.repository.AddMovie(ctx, persistence.AddMovieArg{UserID: session.UserId, MovieID: req.MovieId, Title: movie.Title, Note: req.Note})
+	if err != nil {
+		// TODO: check if already present
+		h.logger.ErrorContext(ctx, "h.repository.AddMovie failed", "error", err)
+		return nil, repoErrorToAPIError(err)
+	}
+
 	h.logger.InfoContext(ctx, "movie added", "user_id", session.UserId, "movie_title", movie.Title)
-	return &pb.AddUserMovieResponse{Movie: &pb.Movie{Id: movie.ID, Title: movie.Title}}, nil
+	return &pb.AddUserMovieResponse{Movie: &pb.Movie{Id: movieDB.ID, Title: movie.Title}}, nil
 }
 
 // ListUserMovies lists movies for a user.
@@ -480,12 +504,12 @@ func (h *Handler) ListUserMovies(ctx context.Context, req *pb.ListUserMoviesRequ
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	listMoviesRet, err := h.repository.ListMovies(ctx, persistence.ListMoviesArg{UserID: req.UserId})
+	listMoviesRet, err := h.repository.GetMovieList(ctx, persistence.GetMovieListArg{UserID: req.UserId})
 	if err != nil {
 		return nil, repoErrorToAPIError(err)
 	}
 
-	return &pb.ListUserMoviesResponse{Movies: repoMoviesToPB(listMoviesRet.Movies...)}, nil
+	return &pb.ListUserMoviesResponse{Movies: repoMoviesToPBListUserMoviesResponseMovieStatus(listMoviesRet.Movies)}, nil
 }
 
 // DeleteUserMovie deletes a movie from the current user's list.
@@ -506,4 +530,8 @@ func (h *Handler) DeleteUserMovie(ctx context.Context, req *pb.DeleteUserMovieRe
 
 	h.logger.InfoContext(ctx, "movie deleted", "user_id", session.UserId, "movie_title", req.Id)
 	return &pb.DeleteUserMovieResponse{}, nil
+}
+
+func (h *Handler) SearchMovie(ctx context.Context, req *pb.SearchMovieRequest) (*pb.SearchMovieResponse, error) {
+	return h.movieSearchEngine.Search(ctx, req)
 }

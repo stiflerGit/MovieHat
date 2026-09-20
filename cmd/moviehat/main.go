@@ -15,16 +15,20 @@ import (
 
 	gatewaypb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/api/gateway/v1/gatewayv1connect"
+	tmdbclient "github.com/stiflerGit/moviehat/gen/tmdb"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	authstorage "github.com/stiflerGit/moviehat/internal/auth/persistence/sqlite"
+	moviehat "github.com/stiflerGit/moviehat/internal/core"
+	moviehatsqlite "github.com/stiflerGit/moviehat/internal/core/persistence/sqlite"
 	extractor "github.com/stiflerGit/moviehat/internal/extractor/weighted"
 	equalprobabilityscorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/equal"
 	fairsharescorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share"
 	fairsharescorerpersistence "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share/persistence/sqlite"
 	gateway "github.com/stiflerGit/moviehat/internal/gateway/v1"
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
-	moviehat "github.com/stiflerGit/moviehat/internal/moviehat"
-	moviehatsqlite "github.com/stiflerGit/moviehat/internal/moviehat/persistence/sqlite"
+	"github.com/stiflerGit/moviehat/internal/moviesearch"
+	"github.com/stiflerGit/moviehat/internal/moviesearch/provider/tmdb"
+	requesteditor "github.com/stiflerGit/moviehat/pkg/http/requesteditor"
 	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"connectrpc.com/authn"
@@ -36,6 +40,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+const (
+	tmdbAPIURL = "https://api.themoviedb.org"
+)
+
 // Config contains server settings loaded from the environment.
 type Config struct {
 	Addr                  string `env:"ADDR" envDefault:"0.0.0.0:8080"`
@@ -45,6 +53,7 @@ type Config struct {
 	BootstrapEnabled      bool   `env:"BOOTSTRAP_ENABLED" envDefault:"false"`
 	BootstrapEmail        string `env:"BOOTSTRAP_EMAIL"`
 	BootstrapPassword     string `env:"BOOTSTRAP_PASSWORD"`
+	TMDToken              string `env:"TMDB_TOKEN"`
 }
 
 func main() {
@@ -66,15 +75,16 @@ func main() {
 }
 
 func run(ctx context.Context, config Config) error {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
+	slog.SetDefault(logger)
+
 	txManager, err := initDB(ctx, config.DBPath)
 	if err != nil {
 		return err
 	}
-	defer txManager.Close()
+	defer func() { _ = txManager.Close() }()
 
-	slog.InfoContext(ctx, "starting moviehat server", "addr", config.Addr, "dbPath", config.DBPath)
-
-	logger := slog.Default()
+	logger.InfoContext(ctx, "starting moviehat server", "addr", config.Addr, "dbPath", config.DBPath)
 
 	authHandler, err := auth.New(authstorage.New(txManager), config.AuthSecret, auth.WithLogger(logger))
 	if err != nil {
@@ -98,7 +108,13 @@ func run(ctx context.Context, config Config) error {
 		return fmt.Errorf("weighted.New: %w", err)
 	}
 
-	movieHatHandler := moviehat.New(moviehatsqlite.New(txManager), extractor, moviehat.WithLogger(logger))
+	tmdbclient, err := tmdbclient.NewClient(tmdbAPIURL, tmdbclient.WithRequestEditorFn(requesteditor.SetBearerToken(config.TMDToken)))
+	if err != nil {
+		return fmt.Errorf("tmdbclient.NewClient: %w", err)
+	}
+
+	moviesearchengine := moviesearch.New(tmdb.New(tmdbclient))
+	movieHatHandler := moviehat.New(moviehatsqlite.New(txManager), extractor, moviesearchengine, moviehat.WithLogger(logger))
 
 	if err := bootstrapInitialUser(ctx, config, authHandler, movieHatHandler); err != nil {
 		return fmt.Errorf("bootstrapInitialUser: %w", err)
@@ -162,7 +178,7 @@ func run(ctx context.Context, config Config) error {
 
 	errorsCh := make(chan error, 1)
 	go func() {
-		slog.InfoContext(ctx, "http server listening", "addr", config.Addr)
+		logger.InfoContext(ctx, "http server listening", "addr", config.Addr)
 		errorsCh <- s.ListenAndServe()
 	}()
 
@@ -174,7 +190,7 @@ func run(ctx context.Context, config Config) error {
 		return fmt.Errorf("s.ListenAndServe: %w", err)
 
 	case <-ctx.Done():
-		slog.InfoContext(context.Background(), "shutdown signal received")
+		logger.InfoContext(context.Background(), "shutdown signal received")
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -210,7 +226,7 @@ func initDB(ctx context.Context, dbPath string) (*tx.Manager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("os.OpenFile: %w", err)
 	}
-	defer dbFile.Close()
+	defer func() { _ = dbFile.Close() }()
 
 	dsn := "file:" + dbPath + "?_pragma=foreign_keys(1)"
 

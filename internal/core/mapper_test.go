@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
 	"github.com/stretchr/testify/require"
 )
 

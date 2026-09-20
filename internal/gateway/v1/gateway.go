@@ -8,7 +8,7 @@ import (
 	v1 "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/api/gateway/v1/gatewayv1connect"
 	"github.com/stiflerGit/moviehat/internal/auth"
-	moviehat "github.com/stiflerGit/moviehat/internal/moviehat"
+	moviehat "github.com/stiflerGit/moviehat/internal/core"
 )
 
 //go:generate mockgen -package mocks -destination mocks/auth_handler.go . AuthHandler
@@ -42,6 +42,7 @@ type MovieHatHandler interface {
 	AddUserMovie(context.Context, *v1.AddUserMovieRequest) (*v1.AddUserMovieResponse, error)
 	ListUserMovies(context.Context, *v1.ListUserMoviesRequest) (*v1.ListUserMoviesResponse, error)
 	DeleteUserMovie(context.Context, *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error)
+	SearchMovie(context.Context, *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error)
 }
 
 // Handler implements the GatewayService RPC surface.
@@ -203,4 +204,8 @@ func buildInvitationURL(baseURL *url.URL, token string) string {
 	ret, _ := url.Parse(baseURL.String())
 	ret.Fragment = token
 	return ret.String()
+}
+
+func (h *Handler) SearchMovie(ctx context.Context, req *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error) {
+	return h.movieHatHandler.SearchMovie(ctx, req)
 }

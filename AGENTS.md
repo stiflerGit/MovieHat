@@ -2,6 +2,33 @@
 
 Instructions for AI coding agents working in this repository.
 
+## Project: MovieHat
+
+MovieHat is a Go service that helps groups fairly choose a movie to watch together.
+
+**Domain concepts:**
+- **User**: A person with an auth account and a movie watchlist
+- **Session**: A movie-selection round with participants. When ended, a winner is extracted.
+- **Extractor**: An algorithm that selects a session winner fairly (weighted by past wins so everyone gets a turn)
+- **Movie**: From TMDB; users add movies to their lists; winners set the watched movie
+- **Authentication**: Session tokens + bcrypt passwords + invitation-only sign-up
+
+**Tech stack:**
+- **ConnectRPC** (HTTP/gRPC with protobuf, via `connectrpc.com/connect`)
+- **Protobuf**: Definitions in `proto/`, generated bindings in `api/` (Buf build system)
+- **SQLite** via `modernc.org/sqlite` (no CGo), migrations via `goose`
+- **TMDB API**: OpenAPI spec in `third_party/tmdb/`, generated Go client in `gen/tmdb/` (via `make oas-generate`)
+
+**Testing patterns:**
+- Table-driven tests with shared assertion helpers
+- Mock packages per domain via `go.uber.org/mock` (stored under each `persistence/mocks/`)
+- Individual domain tests avoid database by mocking persistence interfaces
+- Integration tests in `tests/` may use real SQLite
+
+**Code generation:**
+- `make proto-generate` — Buf-based protobuf + Connect code generation into `api/`
+- `make oas-generate` — oapi-codegen from `third_party/tmdb/api.json` into `gen/tmdb/`
+
 ## Code modification policy
 
 Do **not** modify business code unless the user explicitly includes the phrase:

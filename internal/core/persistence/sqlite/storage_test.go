@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
 	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"github.com/google/uuid"
 	"github.com/pressly/goose/v3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 )
@@ -149,24 +150,26 @@ func TestStorageMoviesLifecycle(t *testing.T) {
 	user, err := s.CreateUser(ctx, persistence.CreateUserArg{UserID: authUserID})
 	require.NoError(t, err)
 
-	_, err = s.CreateMovie(ctx, persistence.CreateMovieArg{UserID: authUserID})
+	_, err = s.AddMovie(ctx, persistence.AddMovieArg{UserID: authUserID})
 	require.Error(t, err)
 	var invalidArg persistence.ErrInvalidArgument
 	require.ErrorAs(t, err, &invalidArg)
 
-	movie, err := s.CreateMovie(ctx, persistence.CreateMovieArg{UserID: authUserID, MovieTitle: "Alien"})
+	movie, err := s.AddMovie(ctx, persistence.AddMovieArg{UserID: authUserID, MovieID: "12345", Title: "Alien"})
 	require.NoError(t, err)
 	require.Equal(t, "Alien", movie.Title)
+	require.Equal(t, "12345", movie.ID)
 
-	list, err := s.ListMovies(ctx, persistence.ListMoviesArg{UserID: user.ID})
+	list, err := s.GetMovieList(ctx, persistence.GetMovieListArg{UserID: user.ID})
 	require.NoError(t, err)
 	require.Len(t, list.Movies, 1)
 
 	deleted, err := s.DeleteMovie(ctx, persistence.DeleteMovieArg{UserID: user.ID, MovieID: movie.ID})
 	require.NoError(t, err)
 	require.Equal(t, "Alien", deleted.Title)
+	require.Equal(t, "12345", movie.ID)
 
-	_, err = s.ListMovies(ctx, persistence.ListMoviesArg{UserID: user.ID})
+	_, err = s.GetMovieList(ctx, persistence.GetMovieListArg{UserID: user.ID})
 	require.Error(t, err)
 	require.True(t, errors.Is(err, persistence.ErrNotFound))
 }
@@ -184,7 +187,7 @@ func TestStorageUpdateSession(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, s.CloseSession(ctx, session.ID))
 
-		movie, err := s.CreateMovie(ctx, persistence.CreateMovieArg{UserID: userID, MovieTitle: "Alien"})
+		movie, err := s.AddMovie(ctx, persistence.AddMovieArg{UserID: userID, MovieID: "12345", Title: "Alien"})
 		require.NoError(t, err)
 
 		updated, err := s.UpdateSession(ctx, persistence.UpdateSessionArg{ID: session.ID, WatchedMovieID: &movie.ID})
@@ -200,10 +203,51 @@ func TestStorageUpdateSession(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, s.CloseSession(ctx, session.ID))
 
-		invalidMovieID := "not-a-uuid"
-		_, err = s.UpdateSession(ctx, persistence.UpdateSessionArg{ID: session.ID, WatchedMovieID: &invalidMovieID})
+		emptyMovieID := ""
+		_, err = s.UpdateSession(ctx, persistence.UpdateSessionArg{ID: session.ID, WatchedMovieID: &emptyMovieID})
 		require.Error(t, err)
 		var invalidArg persistence.ErrInvalidArgument
 		require.ErrorAs(t, err, &invalidArg)
 	})
+}
+
+func TestStorage_UpdateMovies(t *testing.T) {
+	s := newMovieHatTestStorage(t)
+	ctx := t.Context()
+
+	// user 1
+	userID1 := uuid.NewString()
+	_, err := s.CreateUser(ctx, persistence.CreateUserArg{UserID: userID1})
+	require.NoError(t, err)
+
+	movie11, err := s.AddMovie(ctx, persistence.AddMovieArg{UserID: userID1, MovieID: "mov1", Title: "Alien"})
+	require.NoError(t, err)
+	require.Equal(t, persistence.MovieStatusPending, movie11.Status)
+
+	movie12, err := s.AddMovie(ctx, persistence.AddMovieArg{UserID: userID1, MovieID: "mov12", Title: "Alien 2"})
+	require.NoError(t, err)
+	require.Equal(t, persistence.MovieStatusPending, movie12.Status)
+
+	// user 1
+	userID2 := uuid.NewString()
+	_, err = s.CreateUser(ctx, persistence.CreateUserArg{UserID: userID2})
+	require.NoError(t, err)
+
+	// same movie of user 1
+	movie21, err := s.AddMovie(ctx, persistence.AddMovieArg{UserID: userID2, MovieID: "mov1", Title: "Alien"})
+	require.NoError(t, err)
+	require.Equal(t, persistence.MovieStatusPending, movie21.Status)
+
+	statusWatched := persistence.MovieStatusWatched
+
+	err = s.UpdateMovies(t.Context(), persistence.UpdateMoviesArg{ID: "mov1", Status: &statusWatched})
+	require.NoError(t, err)
+
+	m, err := s.GetMovie(ctx, persistence.GetMovieArg{UserID: userID1, MovieID: movie11.ID})
+	require.NoError(t, err)
+	assert.Equal(t, statusWatched, m.Status)
+
+	m, err = s.GetMovie(ctx, persistence.GetMovieArg{UserID: userID1, MovieID: movie21.ID})
+	require.NoError(t, err)
+	assert.Equal(t, statusWatched, m.Status)
 }

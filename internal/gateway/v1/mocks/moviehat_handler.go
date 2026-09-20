@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	gatewayv1 "github.com/stiflerGit/moviehat/api/gateway/v1"
-	v1 "github.com/stiflerGit/moviehat/internal/moviehat"
+	v1 "github.com/stiflerGit/moviehat/internal/core"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -265,6 +265,21 @@ func (m *MockMovieHatHandler) RemoveParticipant(arg0 context.Context, arg1 *gate
 func (mr *MockMovieHatHandlerMockRecorder) RemoveParticipant(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveParticipant", reflect.TypeOf((*MockMovieHatHandler)(nil).RemoveParticipant), arg0, arg1)
+}
+
+// SearchMovie mocks base method.
+func (m *MockMovieHatHandler) SearchMovie(arg0 context.Context, arg1 *gatewayv1.SearchMovieRequest) (*gatewayv1.SearchMovieResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchMovie", arg0, arg1)
+	ret0, _ := ret[0].(*gatewayv1.SearchMovieResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchMovie indicates an expected call of SearchMovie.
+func (mr *MockMovieHatHandlerMockRecorder) SearchMovie(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchMovie", reflect.TypeOf((*MockMovieHatHandler)(nil).SearchMovie), arg0, arg1)
 }
 
 // SetSessionMovie mocks base method.

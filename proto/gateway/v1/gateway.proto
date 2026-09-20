@@ -197,7 +197,7 @@ message ListParticipantsResponse {
 }
 
 message AddUserMovieRequest {
-  string movie_title = 1 [
+  string movie_id = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
@@ -207,7 +207,8 @@ message AddUserMovieRequest {
 message Movie {
   string id = 1;
   string title = 2;
-  string note = 3;
+  google.protobuf.Timestamp release_date = 3;
+  string poster_path = 4;
 }
 
 message AddUserMovieResponse {
@@ -222,7 +223,18 @@ message ListUserMoviesRequest {
 }
 
 message ListUserMoviesResponse {
-  repeated Movie movies = 1;
+  message MovieStatus {
+    enum Status {
+      STATUS_UNSPECIFIED = 0;
+      STATUS_PENDING = 1;
+      STATUS_WATCHED = 2;
+    }
+
+    Movie movie = 1;
+    Status status = 2;
+  }
+
+  repeated MovieStatus movies = 1;
 }
 
 message DeleteUserMovieRequest {
@@ -233,6 +245,25 @@ message DeleteUserMovieRequest {
 }
 
 message DeleteUserMovieResponse {}
+
+message SearchMovieRequest {
+  string query = 1;
+  int32 page = 2;
+  // TODO: per page?
+}
+
+message SearchMovieResponse {
+  message Result {
+    string id = 1;
+    string title = 2;
+    google.protobuf.Timestamp release_date = 3;
+    string poster_path = 4;
+  }
+  int32 page = 5;
+  int32 total_pages = 6;
+  int32 total_results = 7;
+  repeated Result results = 8;
+}
 
 service GatewayService {
   rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse);
@@ -255,4 +286,5 @@ service GatewayService {
   rpc AddUserMovie(AddUserMovieRequest) returns (AddUserMovieResponse);
   rpc ListUserMovies(ListUserMoviesRequest) returns (ListUserMoviesResponse);
   rpc DeleteUserMovie(DeleteUserMovieRequest) returns (DeleteUserMovieResponse);
+  rpc SearchMovie(SearchMovieRequest) returns (SearchMovieResponse);
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
 	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
 	"github.com/google/uuid"
@@ -116,7 +116,7 @@ func (s *Storage) ListUsers(ctx context.Context, in persistence.ListUsersArg) ([
 	if err != nil {
 		return nil, fmt.Errorf("querying all users")
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	users := make([]persistence.User, 0, count)
 	for rows.Next() {
@@ -258,7 +258,7 @@ func (s *Storage) ListSessions(ctx context.Context, in persistence.ListSessionsA
 	if err != nil {
 		return persistence.ListSessionsRet{}, fmt.Errorf("r.executor.QueryContext: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	sessions := make([]persistence.Session, 0, count)
 	for rows.Next() {
@@ -324,7 +324,7 @@ func (s *Storage) UpdateSession(ctx context.Context, in persistence.UpdateSessio
 	}
 
 	hasValidWinnerID := in.WinnerID != nil && *in.WinnerID != "" && uuid.Validate(*in.WinnerID) == nil
-	hasValidWatchedMovieID := in.WatchedMovieID != nil && *in.WatchedMovieID != "" && uuid.Validate(*in.WatchedMovieID) == nil
+	hasValidWatchedMovieID := in.WatchedMovieID != nil && *in.WatchedMovieID != ""
 	if !hasValidWinnerID && !hasValidWatchedMovieID {
 		return persistence.Session{}, persistence.ErrInvalidArgument{Err: errors.New("no valid update argument")}
 	}
@@ -583,7 +583,7 @@ func (s *Storage) ListParticipants(ctx context.Context, in persistence.ListParti
 		}
 		return persistence.ListParticipantsRet{}, fmt.Errorf("r.db.QueryRowContext Participants: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	participants := make([]persistence.User, 0, count)
 	for rows.Next() {
@@ -602,29 +602,33 @@ func (s *Storage) ListParticipants(ctx context.Context, in persistence.ListParti
 	return persistence.ListParticipantsRet{Participants: participants}, nil
 }
 
-// CreateMovie adds a movie to a user's list.
-func (s *Storage) CreateMovie(ctx context.Context, in persistence.CreateMovieArg) (persistence.Movie, error) {
+// AddMovie adds a movie to a user's list.
+func (s *Storage) AddMovie(ctx context.Context, in persistence.AddMovieArg) (persistence.Movie, error) {
 	if in.UserID == "" {
-		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("user_id title is empty")}
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("user_id is empty")}
 	}
 
-	if in.MovieTitle == "" {
+	if in.MovieID == "" {
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("movie_id is empty")}
+	}
+
+	if in.Title == "" {
 		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("movie title is empty")}
 	}
 
 	now := time.Now()
 
 	const query = `
-	INSERT INTO movies(id, owner_id, title, status, note, created_at, updated_at)
+	INSERT INTO movies(movie_id, owner_id, title, status, note, created_at, updated_at)
 	SELECT ?, ?, ?, ?, ?, ?, ?
 	WHERE EXISTS (
 		SELECT 1 FROM users WHERE id = ? AND deleted_at IS NULL
 	)`
 
 	movie := persistence.Movie{
-		ID:        uuid.NewString(),
+		ID:        in.MovieID,
 		UserID:    in.UserID,
-		Title:     in.MovieTitle,
+		Title:     in.Title,
 		Status:    persistence.MovieStatusPending,
 		Note:      in.Note,
 		CreatedAt: now,
@@ -656,7 +660,7 @@ func (s *Storage) GetMovie(ctx context.Context, in persistence.GetMovieArg) (per
 	}
 
 	whereStmts := []string{
-		"id=?",
+		"movie_id=?",
 	}
 	args := []any{
 		in.MovieID,
@@ -669,7 +673,7 @@ func (s *Storage) GetMovie(ctx context.Context, in persistence.GetMovieArg) (per
 	where := strings.Join(whereStmts, " AND ")
 
 	query := fmt.Sprintf(`
-	SELECT id, owner_id, title, status, note, created_at, updated_at, deleted_at
+	SELECT movie_id, owner_id, title, status, note, created_at, updated_at, deleted_at
 	FROM movies
 	WHERE %s`, where)
 
@@ -690,7 +694,7 @@ func (s *Storage) GetMovie(ctx context.Context, in persistence.GetMovieArg) (per
 }
 
 // ListMovies lists movies for a user.
-func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) (persistence.ListMoviesRet, error) {
+func (s *Storage) GetMovieList(ctx context.Context, in persistence.GetMovieListArg) (persistence.GetMovieListRet, error) {
 	whereStmts := []string{
 		"owner_id=?",
 	}
@@ -703,30 +707,30 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 	}
 
 	where := strings.Join(whereStmts, " AND ")
-	query := fmt.Sprintf(`SELECT COUNT(id) FROM movies WHERE %s`, where)
+	query := fmt.Sprintf(`SELECT COUNT(movie_id) FROM movies WHERE %s`, where)
 
 	var count int
 	if err := s.txManager.Executor(ctx).QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
-		return persistence.ListMoviesRet{}, fmt.Errorf("r.db.QueryRowContext COUNT: %w", err)
+		return persistence.GetMovieListRet{}, fmt.Errorf("r.db.QueryRowContext COUNT: %w", err)
 	}
 
 	if count == 0 {
-		return persistence.ListMoviesRet{}, persistence.ErrNotFound
+		return persistence.GetMovieListRet{}, persistence.ErrNotFound
 	}
 
 	query = fmt.Sprintf(`
-		SELECT id, owner_id, title, status, note, created_at, updated_at, deleted_at
+		SELECT movie_id, owner_id, title, status, note, created_at, updated_at, deleted_at
 		FROM movies
 		WHERE %s`, where)
 
 	rows, err := s.txManager.Executor(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return persistence.ListMoviesRet{}, persistence.ErrNotFound
+			return persistence.GetMovieListRet{}, persistence.ErrNotFound
 		}
-		return persistence.ListMoviesRet{}, fmt.Errorf("r.db.QueryContext: %w", err)
+		return persistence.GetMovieListRet{}, fmt.Errorf("r.db.QueryContext: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	movies := make([]persistence.Movie, 0, count)
 	for rows.Next() {
@@ -735,7 +739,7 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 		var deletedAt sql.NullTime
 		err = rows.Scan(&movie.ID, &movie.UserID, &movie.Title, &movie.Status, &movie.Note, &movie.CreatedAt, &movie.UpdatedAt, &deletedAt)
 		if err != nil {
-			return persistence.ListMoviesRet{}, fmt.Errorf("r.db.QueryRowContext: %w", err)
+			return persistence.GetMovieListRet{}, fmt.Errorf("r.db.QueryRowContext: %w", err)
 		}
 
 		movie.DeletedAt = deletedAt.Time
@@ -743,14 +747,22 @@ func (s *Storage) ListMovies(ctx context.Context, in persistence.ListMoviesArg) 
 	}
 
 	if rows.Err() != nil {
-		return persistence.ListMoviesRet{}, fmt.Errorf("rows.Err(): %w", err)
+		return persistence.GetMovieListRet{}, fmt.Errorf("rows.Err(): %w", err)
 	}
 
-	return persistence.ListMoviesRet{Movies: movies}, nil
+	return persistence.GetMovieListRet{Movies: movies}, nil
 }
 
 // UpdateMovie updates mutable movie fields.
 func (s *Storage) UpdateMovie(ctx context.Context, in persistence.UpdateMovieArg) (persistence.Movie, error) {
+	if in.ID == "" {
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("movie id is empty")}
+	}
+
+	if in.UserID == "" {
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("user id is empty")}
+	}
+
 	now := time.Now()
 	setStmts := []string{
 		"updated_at=?",
@@ -775,8 +787,12 @@ func (s *Storage) UpdateMovie(ctx context.Context, in persistence.UpdateMovieArg
 	}
 
 	set := strings.Join(setStmts, ",")
-	query := fmt.Sprintf("UPDATE movies SET %s WHERE id=? RETURNING id, owner_id, title, status, created_at, updated_at, deleted_at", set)
-	args = append(args, in.ID)
+	query := fmt.Sprintf(`
+		UPDATE movies SET %s
+		WHERE id=? AND owner_id=?
+		RETURNING movie_id, owner_id, title, status, created_at, updated_at, deleted_at`,
+		set)
+	args = append(args, in.ID, in.UserID)
 
 	var movie persistence.Movie
 	var deletedAt sql.NullTime
@@ -805,8 +821,8 @@ func (s *Storage) DeleteMovie(ctx context.Context, in persistence.DeleteMovieArg
 	const query = `
 	UPDATE movies
 	SET deleted_at=?, updated_at=?
-	WHERE owner_id=? AND id=? AND deleted_at IS NULL
-	RETURNING id, owner_id, title, status, note, created_at, updated_at, deleted_at`
+	WHERE owner_id=? AND movie_id=? AND deleted_at IS NULL
+	RETURNING movie_id, owner_id, title, status, note, created_at, updated_at, deleted_at`
 
 	var movie persistence.Movie
 	var deletedAt sql.NullTime
@@ -822,4 +838,31 @@ func (s *Storage) DeleteMovie(ctx context.Context, in persistence.DeleteMovieArg
 	movie.DeletedAt = deletedAt.Time
 
 	return movie, nil
+}
+
+// UpdateMovies updates the status of multiple movies.
+//
+// When Status is nil the call is a no-op and returns nil.
+// Returns ErrInvalidArgument if the movie id is empty.
+func (s *Storage) UpdateMovies(ctx context.Context, req persistence.UpdateMoviesArg) error {
+	if req.ID == "" {
+		return persistence.ErrInvalidArgument{Err: errors.New("movie id is empty")}
+	}
+
+	if req.Status == nil {
+		return nil
+	}
+
+	const query = `UPDATE movies
+	SET updated_at=?, status=? WHERE movie_id=? AND status != ? AND deleted_at IS NULL`
+
+	_, err := s.txManager.Executor(ctx).ExecContext(ctx, query, time.Now(), *req.Status, req.ID, *req.Status)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return persistence.ErrNotFound
+		}
+		return fmt.Errorf("ExecContext: %w", err)
+	}
+
+	return nil
 }

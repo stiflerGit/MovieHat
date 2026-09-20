@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func pbUserToRepoUser(in *pb.User) persistence.User {
@@ -63,7 +63,6 @@ func repoMovieToPB(in persistence.Movie) *pb.Movie {
 	return &pb.Movie{
 		Id:    in.ID,
 		Title: in.Title,
-		Note:  in.Note,
 	}
 }
 
@@ -94,4 +93,27 @@ func repoErrorToAPIError(err error) error {
 		code = connect.CodeFailedPrecondition
 	}
 	return connect.NewError(code, err)
+}
+
+func repoMovieStatusToPB(s persistence.MovieStatus) pb.ListUserMoviesResponse_MovieStatus_Status {
+	switch s {
+	case persistence.MovieStatusPending:
+		return pb.ListUserMoviesResponse_MovieStatus_STATUS_PENDING
+	case persistence.MovieStatusWatched:
+		return pb.ListUserMoviesResponse_MovieStatus_STATUS_WATCHED
+	}
+	return pb.ListUserMoviesResponse_MovieStatus_STATUS_UNSPECIFIED
+}
+
+func repoMoviesToPBListUserMoviesResponseMovieStatus(movies []persistence.Movie) []*pb.ListUserMoviesResponse_MovieStatus {
+	pbMovies := make([]*pb.ListUserMoviesResponse_MovieStatus, 0, len(movies))
+	for _, m := range movies {
+		pbMovies = append(pbMovies,
+			&pb.ListUserMoviesResponse_MovieStatus{
+				Movie:  repoMovieToPB(m),
+				Status: repoMovieStatusToPB(m.Status),
+			},
+		)
+	}
+	return pbMovies
 }
