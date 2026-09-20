@@ -90,6 +90,9 @@ const (
 	// GatewayServiceDeleteUserMovieProcedure is the fully-qualified name of the GatewayService's
 	// DeleteUserMovie RPC.
 	GatewayServiceDeleteUserMovieProcedure = "/gateway.v1.GatewayService/DeleteUserMovie"
+	// GatewayServiceSearchMovieProcedure is the fully-qualified name of the GatewayService's
+	// SearchMovie RPC.
+	GatewayServiceSearchMovieProcedure = "/gateway.v1.GatewayService/SearchMovie"
 )
 
 // GatewayServiceClient is a client for the gateway.v1.GatewayService service.
@@ -114,6 +117,7 @@ type GatewayServiceClient interface {
 	AddUserMovie(context.Context, *v1.AddUserMovieRequest) (*v1.AddUserMovieResponse, error)
 	ListUserMovies(context.Context, *v1.ListUserMoviesRequest) (*v1.ListUserMoviesResponse, error)
 	DeleteUserMovie(context.Context, *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error)
+	SearchMovie(context.Context, *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error)
 }
 
 // NewGatewayServiceClient constructs a client for the gateway.v1.GatewayService service. By
@@ -247,6 +251,12 @@ func NewGatewayServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(gatewayServiceMethods.ByName("DeleteUserMovie")),
 			connect.WithClientOptions(opts...),
 		),
+		searchMovie: connect.NewClient[v1.SearchMovieRequest, v1.SearchMovieResponse](
+			httpClient,
+			baseURL+GatewayServiceSearchMovieProcedure,
+			connect.WithSchema(gatewayServiceMethods.ByName("SearchMovie")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -272,6 +282,7 @@ type gatewayServiceClient struct {
 	addUserMovie            *connect.Client[v1.AddUserMovieRequest, v1.AddUserMovieResponse]
 	listUserMovies          *connect.Client[v1.ListUserMoviesRequest, v1.ListUserMoviesResponse]
 	deleteUserMovie         *connect.Client[v1.DeleteUserMovieRequest, v1.DeleteUserMovieResponse]
+	searchMovie             *connect.Client[v1.SearchMovieRequest, v1.SearchMovieResponse]
 }
 
 // CreateInvitation calls gateway.v1.GatewayService.CreateInvitation.
@@ -454,6 +465,15 @@ func (c *gatewayServiceClient) DeleteUserMovie(ctx context.Context, req *v1.Dele
 	return nil, err
 }
 
+// SearchMovie calls gateway.v1.GatewayService.SearchMovie.
+func (c *gatewayServiceClient) SearchMovie(ctx context.Context, req *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error) {
+	response, err := c.searchMovie.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // GatewayServiceHandler is an implementation of the gateway.v1.GatewayService service.
 type GatewayServiceHandler interface {
 	CreateInvitation(context.Context, *v1.CreateInvitationRequest) (*v1.CreateInvitationResponse, error)
@@ -476,6 +496,7 @@ type GatewayServiceHandler interface {
 	AddUserMovie(context.Context, *v1.AddUserMovieRequest) (*v1.AddUserMovieResponse, error)
 	ListUserMovies(context.Context, *v1.ListUserMoviesRequest) (*v1.ListUserMoviesResponse, error)
 	DeleteUserMovie(context.Context, *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error)
+	SearchMovie(context.Context, *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error)
 }
 
 // NewGatewayServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -605,6 +626,12 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 		connect.WithSchema(gatewayServiceMethods.ByName("DeleteUserMovie")),
 		connect.WithHandlerOptions(opts...),
 	)
+	gatewayServiceSearchMovieHandler := connect.NewUnaryHandlerSimple(
+		GatewayServiceSearchMovieProcedure,
+		svc.SearchMovie,
+		connect.WithSchema(gatewayServiceMethods.ByName("SearchMovie")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/gateway.v1.GatewayService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case GatewayServiceCreateInvitationProcedure:
@@ -647,6 +674,8 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 			gatewayServiceListUserMoviesHandler.ServeHTTP(w, r)
 		case GatewayServiceDeleteUserMovieProcedure:
 			gatewayServiceDeleteUserMovieHandler.ServeHTTP(w, r)
+		case GatewayServiceSearchMovieProcedure:
+			gatewayServiceSearchMovieHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -734,4 +763,8 @@ func (UnimplementedGatewayServiceHandler) ListUserMovies(context.Context, *v1.Li
 
 func (UnimplementedGatewayServiceHandler) DeleteUserMovie(context.Context, *v1.DeleteUserMovieRequest) (*v1.DeleteUserMovieResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.DeleteUserMovie is not implemented"))
+}
+
+func (UnimplementedGatewayServiceHandler) SearchMovie(context.Context, *v1.SearchMovieRequest) (*v1.SearchMovieResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.SearchMovie is not implemented"))
 }

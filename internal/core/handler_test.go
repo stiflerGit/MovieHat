@@ -8,13 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/authn"
-	"connectrpc.com/connect"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth"
-	extractormock "github.com/stiflerGit/moviehat/internal/moviehat/mocks"
-	"github.com/stiflerGit/moviehat/internal/moviehat/persistence"
-	persistencemock "github.com/stiflerGit/moviehat/internal/moviehat/persistence/mocks"
+	"github.com/stiflerGit/moviehat/internal/core/mocks"
+	extractormock "github.com/stiflerGit/moviehat/internal/core/mocks"
+	"github.com/stiflerGit/moviehat/internal/core/persistence"
+	persistencemock "github.com/stiflerGit/moviehat/internal/core/persistence/mocks"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"connectrpc.com/authn"
+	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -33,7 +36,7 @@ func TestHandlerCreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
 	extractor := extractormock.NewMockExtractor(ctrl)
-	h := New(store, extractor, WithLogger(testLogger()))
+	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	store.EXPECT().CreateUser(gomock.Any(), persistence.CreateUserArg{UserID: "auth-u1"}).
 		Return(persistence.User{ID: "auth-u1", Name: "john"}, nil)
@@ -44,29 +47,38 @@ func TestHandlerCreateUser(t *testing.T) {
 }
 
 func TestHandlerUpdateUser_MissingSession(t *testing.T) {
-	h := New(nil, nil, WithLogger(testLogger()))
+	h := New(nil, nil, nil, WithLogger(testLogger()))
 	_, err := h.UpdateUser(t.Context(), &pb.UpdateUserRequest{Name: "john"})
 	require.Error(t, err)
 	require.Equal(t, connect.CodeUnauthenticated, connect.CodeOf(err))
 }
 
-func TestHandlerAddUserMovie(t *testing.T) {
+func TestMovieHandlerAddUserMovie(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
-	h := New(store, nil, WithLogger(testLogger()))
+	movieSearchEngine := mocks.NewMockMovieSearchEngine(ctrl)
+
+	h := New(store, nil, movieSearchEngine, WithLogger(testLogger()))
 
 	ctx := authn.SetInfo(t.Context(), auth.Session{UserId: "user-1"})
-	store.EXPECT().CreateMovie(gomock.Any(), persistence.CreateMovieArg{UserID: "user-1", MovieTitle: "Alien"}).
+	store.EXPECT().AddMovie(gomock.Any(), persistence.AddMovieArg{UserID: "user-1", MovieID: "12345"}).
 		Return(persistence.Movie{ID: "movie-1", Title: "Alien"}, nil)
+	movieSearchEngine.EXPECT().GetByID(ctx, "12345").Return(
+		&pb.Movie{
+			Id:          "12345",
+			Title:       "Alien",
+			ReleaseDate: timestamppb.New(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)),
+			PosterPath:  "/alien.jpg",
+		}, nil)
 
-	resp, err := h.AddUserMovie(ctx, &pb.AddUserMovieRequest{MovieTitle: "Alien"})
+	resp, err := h.AddUserMovie(ctx, &pb.AddUserMovieRequest{MovieId: "12345"})
 	require.NoError(t, err)
 	require.Equal(t, "movie-1", resp.Movie.Id)
 	require.Equal(t, "Alien", resp.Movie.Title)
 }
 
 func TestHandlerListUserMovies_Validation(t *testing.T) {
-	h := New(nil, nil, WithLogger(testLogger()))
+	h := New(nil, nil, nil, WithLogger(testLogger()))
 
 	_, err := h.ListUserMovies(t.Context(), &pb.ListUserMoviesRequest{})
 	require.Error(t, err)
@@ -74,7 +86,7 @@ func TestHandlerListUserMovies_Validation(t *testing.T) {
 }
 
 func TestHandlerDeleteUserMovie_MissingSession(t *testing.T) {
-	h := New(nil, nil, WithLogger(testLogger()))
+	h := New(nil, nil, nil, WithLogger(testLogger()))
 
 	_, err := h.DeleteUserMovie(t.Context(), &pb.DeleteUserMovieRequest{Id: "m-1"})
 	require.Error(t, err)
@@ -85,7 +97,7 @@ func TestHandlerEndSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
 	extractor := extractormock.NewMockExtractor(ctrl)
-	h := New(store, extractor, WithLogger(testLogger()))
+	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	participants := []persistence.User{{ID: "u1", Name: "john"}, {ID: "u2", Name: "jane"}}
 	winner := &pb.User{Id: "u2", Name: "jane"}
@@ -117,7 +129,7 @@ func TestHandlerEndSession_StoreExtractionError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
 	extractor := extractormock.NewMockExtractor(ctrl)
-	h := New(store, extractor, WithLogger(testLogger()))
+	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	participants := []persistence.User{{ID: "u1", Name: "john"}, {ID: "u2", Name: "jack"}}
 	winner := &pb.User{Id: "u1", Name: "john"}
@@ -312,7 +324,7 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			store := persistencemock.NewMockTransactionalStorage(ctrl)
-			h := New(store, nil, WithLogger(testLogger()))
+			h := New(store, nil, nil, WithLogger(testLogger()))
 
 			if tc.setupMock != nil {
 				store.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -443,7 +455,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			store := persistencemock.NewMockTransactionalStorage(ctrl)
 			extractor := extractormock.NewMockExtractor(ctrl)
-			h := New(store, extractor, WithLogger(testLogger()))
+			h := New(store, extractor, nil, WithLogger(testLogger()))
 
 			if tc.setupMock != nil {
 				tc.setupMock(store, extractor)

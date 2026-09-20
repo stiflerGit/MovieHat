@@ -25,10 +25,10 @@ What is implemented in this repository:
 - sign in and sign out with token-based auth
 - bootstrap the first user for local development
 - list users, update the current user, and delete the current user
-- add, list, and delete user movies
+- add, list, and delete user movies (searched via TMDB API)
 - create, list, get, and delete sessions
 - add, remove, and list session participants
-- end a session and extract a winner with the fair-share algorithm
+- end a session and extract a winner with a weighted fair-share algorithm
 - set the watched movie for a closed session as that session's winner
 - run embedded SQLite migrations at startup
 - build and run the service in Docker
@@ -47,6 +47,8 @@ Current caveats:
 - [ConnectRPC](https://connectrpc.com/)
 - [SQLite](https://www.sqlite.org/) via `modernc.org/sqlite`
 - [Goose](https://github.com/pressly/goose)
+- [Buf](https://buf.build/) for protobuf management
+- [TMDB API](https://developer.themoviedb.org/) for movie search
 
 ## Getting Started
 
@@ -54,27 +56,33 @@ Current caveats:
 
 - Go `1.26.4` or newer
 - Docker (optional)
+- A TMDB API Read Access Token (free, [sign up](https://www.themoviedb.org/signup))
 
 ### Installation
 
-The quickest way to run the project locally is:
+Set your TMDB token and run:
 
 ```bash
+export TMDB_TOKEN="your-tmdb-read-access-token"
 make run
 ```
 
 That command starts the server with local-development defaults, including bootstrap of the first user:
 
-- `ADDR=0.0.0.0:8080`
-- `DB_PATH=./moviehat.db`
-- `AUTH_SECRET=dev-secret`
-- `BOOTSTRAP_ENABLED=true`
-- `BOOTSTRAP_EMAIL=admin@moviehat.com`
-- `BOOTSTRAP_PASSWORD=moviehat`
+| Variable | Default |
+|---|---|
+| `ADDR` | `0.0.0.0:8080` |
+| `DB_PATH` | `./moviehat.db` |
+| `AUTH_SECRET` | `dev-secret` |
+| `BOOTSTRAP_ENABLED` | `true` |
+| `BOOTSTRAP_EMAIL` | `admin@moviehat.com` |
+| `BOOTSTRAP_PASSWORD` | `moviehat` |
+| `TMDB_TOKEN` | *(from environment — must be set manually)* |
 
 If you prefer running it directly:
 
 ```bash
+TMDB_TOKEN=your-tmdb-token \
 AUTH_SECRET=dev-secret \
 BOOTSTRAP_ENABLED=true \
 BOOTSTRAP_EMAIL=admin@moviehat.com \
@@ -90,6 +98,7 @@ The server reads configuration from environment variables.
 Required:
 
 - `AUTH_SECRET`
+- `TMDB_TOKEN` — API Read Access Token from TMDB
 
 Optional:
 
@@ -128,7 +137,7 @@ Run the test suite:
 make test
 ```
 
-Run `make help` to get a list of available commands.
+Run `make help` to get a list of available commands (auto-generated from Makefile annotations).
 
 Notes:
 - local runs listen on `0.0.0.0:8080` by default
@@ -142,6 +151,7 @@ Example Docker run for a fresh volume:
 docker run --rm \
   -p 8080:8080 \
   -e AUTH_SECRET=dev-secret \
+  -e TMDB_TOKEN=your-tmdb-token \
   -e BOOTSTRAP_ENABLED=true \
   -e BOOTSTRAP_EMAIL=admin@moviehat.com \
   -e BOOTSTRAP_PASSWORD=moviehat \
@@ -149,16 +159,44 @@ docker run --rm \
   moviehat:dev
 ```
 
+## Regenerating code
+
+- **Protobuf**: `make proto-generate` — generates Go code from `proto/` into `api/`
+- **TMDB client**: `make oas-generate` — generates Go client from `third_party/tmdb/api.json` into `gen/tmdb/`
+
+Run `make help` for the full list.
+
 ## Project Structure
 
 ```text
-cmd/moviehat/          application entrypoint
-internal/auth/         authentication logic and auth persistence
-internal/moviehat/     user, movie, and session logic
-internal/extractor/    fair-share extraction and score persistence
-internal/migrations/   embedded SQL migrations
-proto/                 protobuf definitions and Buf config
-api/                   generated protobuf / Connect code
-build/docker/          container build files
-tools/                 tool-only Go module
+cmd/moviehat/                  application entrypoint
+
+proto/                         protobuf definitions (your service schema)
+api/                           generated protobuf / ConnectRPC code
+
+third_party/                   external specs and definitions you don't own
+  tmdb/api.json                 TMDB OpenAPI specification
+
+gen/                           generated Go code from external specs
+  tmdb/client.gen.go            TMDB API client (from oapi-codegen)
+
+pkg/                           hand-written, reusable Go packages
+  math/                         normalization utilities
+  sql/tx/                       generic DB transaction manager
+
+internal/                      app-specific code, not importable outside the module
+  core/                         domain logic (users, sessions, movies, probabilities)
+  auth/                         authentication handler + persistence
+  gateway/v1/                   transport adapter (ConnectRPC → domain)
+  moviesearch/                  movie search abstraction layer
+    handler.go                   maps domain types to protobuf types
+    types.go                     provider interface and domain types
+    provider/tmdb/               TMDB provider implementation
+  extractor/weighted/           weighted fair-share extraction engine
+  extractor/fair_share/         legacy standalone extractor
+  migrations/                   embedded SQL migration files
+
+build/docker/                  container build files
+tools/                         tool-only Go module (buf, oapi-codegen, etc.)
+tests/                         integration tests
 ```

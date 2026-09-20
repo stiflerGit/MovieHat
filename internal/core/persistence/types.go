@@ -18,7 +18,7 @@ type Storage interface {
 	UsersStorage
 	SessionsStorage
 	ParticipantsStorage
-	MoviesStorage
+	UserMovieListsStorage
 }
 
 // Transactor executes storage operations in a transaction.
@@ -52,12 +52,13 @@ type ParticipantsStorage interface {
 	ListParticipants(ctx context.Context, req ListParticipantsArg) (ListParticipantsRet, error)
 }
 
-// MoviesStorage stores user movie lists.
-type MoviesStorage interface {
-	CreateMovie(ctx context.Context, req CreateMovieArg) (Movie, error)
+// UserMovieListsStorage stores user movie lists.
+type UserMovieListsStorage interface {
+	AddMovie(ctx context.Context, req AddMovieArg) (Movie, error)
 	GetMovie(ctx context.Context, req GetMovieArg) (Movie, error)
-	ListMovies(ctx context.Context, req ListMoviesArg) (ListMoviesRet, error)
+	GetMovieList(ctx context.Context, req GetMovieListArg) (GetMovieListRet, error)
 	UpdateMovie(ctx context.Context, req UpdateMovieArg) (Movie, error)
+	UpdateMovies(ctx context.Context, req UpdateMoviesArg) error
 	DeleteMovie(ctx context.Context, req DeleteMovieArg) (Movie, error)
 }
 
@@ -162,15 +163,17 @@ type ListParticipantsRet struct {
 	HasMore      bool
 }
 
-// CreateMovieArg contains data for adding a movie.
-type CreateMovieArg struct {
-	UserID     string
-	MovieTitle string
-	Note       string
+// AddMovieArg contains data for adding a movie.
+type AddMovieArg struct {
+	UserID  string
+	MovieID string
+	Title   string
+	Note    string
 }
 
 // GetMovieArg selects a movie.
 type GetMovieArg struct {
+	UserID         string
 	MovieID        string
 	IncludeDeleted bool
 }
@@ -178,6 +181,7 @@ type GetMovieArg struct {
 // UpdateMovieArg contains mutable movie fields.
 type UpdateMovieArg struct {
 	ID     string
+	UserID string
 	Title  *string
 	Status *MovieStatus
 	Note   *string
@@ -195,22 +199,22 @@ type Movie struct {
 	DeletedAt time.Time
 }
 
-// ListMoviesArg selects movies for a user.
-type ListMoviesArg struct {
+// GetMovieListArg selects movies for a user.
+type GetMovieListArg struct {
 	UserID         string
 	IncludeDeleted bool
 }
 
-// ListMoviesRet contains listed movies.
-type ListMoviesRet struct {
+// GetMovieListRet contains listed movies.
+type GetMovieListRet struct {
 	Movies []Movie
 }
 
-// UpdateMovieListRequest describes a movie-list update request.
-type UpdateMovieListRequest struct{}
-
-// UpdateMovieListResponse describes a movie-list update response.
-type UpdateMovieListResponse struct{}
+// UpdateMoviesArg contains mutable movie fields.
+type UpdateMoviesArg struct {
+	ID     string
+	Status *MovieStatus
+}
 
 // DeleteMovieArg selects a movie to delete.
 type DeleteMovieArg struct {
