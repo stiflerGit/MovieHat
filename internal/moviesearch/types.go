@@ -10,6 +10,8 @@ var (
 	NotFoundErr = errors.New("not found")
 )
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source types.go -destination mocks/provider.go -package mocks -typed
+
 type Provider interface {
 	MovieSearcher
 	MovieDetailsGetter
