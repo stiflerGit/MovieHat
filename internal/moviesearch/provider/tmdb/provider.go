@@ -10,6 +10,8 @@ import (
 	"github.com/stiflerGit/moviehat/internal/moviesearch"
 )
 
+//go:generate go run go.uber.org/mock/mockgen@latest -source provider.go -destination mocks/client.go -package mocks -typed
+
 type ClientInterface interface {
 	SearchMulti(ctx context.Context, params *tmdb.SearchMultiParams, reqEditors ...tmdb.RequestEditorFn) (*http.Response, error)
 	MovieDetails(ctx context.Context, movieId int32, params *tmdb.MovieDetailsParams, reqEditors ...tmdb.RequestEditorFn) (*http.Response, error)
