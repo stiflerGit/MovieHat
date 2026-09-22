@@ -113,7 +113,8 @@ func run(ctx context.Context, config Config) error {
 		return fmt.Errorf("tmdbclient.NewClient: %w", err)
 	}
 
-	moviesearchengine := moviesearch.New(tmdb.New(tmdbclient))
+	tmdbProvider := tmdb.New(tmdbclient)
+	moviesearchengine := moviesearch.New(tmdbProvider, tmdbProvider)
 	movieHatHandler := moviehat.New(moviehatsqlite.New(txManager), extractor, moviesearchengine, moviehat.WithLogger(logger))
 
 	if err := bootstrapInitialUser(ctx, config, authHandler, movieHatHandler); err != nil {

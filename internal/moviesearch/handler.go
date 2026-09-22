@@ -9,36 +9,44 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	defaultPerPage = 100
-)
-
 type Handler struct {
-	provider Provider
+	searcher           MoviesSearcher
+	movieDetailsGetter MovieDetailsGetter
 }
 
-func New(provider Provider) *Handler {
-	return &Handler{provider: provider}
+func New(
+	provider MoviesSearcher,
+	movieDetailsGetter MovieDetailsGetter,
+) *Handler {
+	return &Handler{
+		searcher:           provider,
+		movieDetailsGetter: movieDetailsGetter,
+	}
 }
 
 func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.SearchMovieResponse, error) {
-	resp, err := h.provider.Search(ctx,
-		SearchArg{
-			Query:   req.Query,
-			Page:    int(req.Page),
-			PerPage: defaultPerPage,
+	var pageToken pageToken
+	var err error
+
+	if req.PageToken != "" {
+		pageToken, err = decodePageToken(req.PageToken)
+		if err != nil {
+			return nil, fmt.Errorf("decodePageToken: %w", err)
+		}
+	}
+
+	resp, err := h.searcher.SearchMovies(ctx,
+		SearchMoviesArg{
+			Query:  req.Query,
+			Offset: pageToken.NextOffset,
+			Limit:  int(req.PageSize),
 		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("h.provider.Search: %w", err)
 	}
 
-	searchResponse := &pb.SearchMovieResponse{
-		Page:         int32(resp.Page),
-		TotalPages:   int32(resp.TotalPages),
-		TotalResults: int32(resp.TotalResults),
-	}
-
+	searchResponse := &pb.SearchMovieResponse{}
 	searchResponse.Results = make([]*pb.SearchMovieResponse_Result, 0, len(resp.Results))
 	for _, r := range resp.Results {
 		searchResponse.Results = append(searchResponse.Results,
@@ -51,11 +59,19 @@ func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.S
 		)
 	}
 
+	if resp.HasMore {
+		token, err := encodePageToken(req.Query, pageToken.NextOffset+int(req.PageSize))
+		if err != nil {
+			return nil, fmt.Errorf("encodePageToken: %w", err)
+		}
+		searchResponse.NextPageToken = token
+	}
+
 	return searchResponse, nil
 }
 
 func (h *Handler) GetByID(ctx context.Context, id string) (*pb.Movie, error) {
-	getDetailsRet, err := h.provider.GetDetails(ctx, GetDetailsArg{ID: id})
+	getDetailsRet, err := h.movieDetailsGetter.GetDetails(ctx, GetDetailsArg{ID: id})
 	if err != nil {
 		return nil, fmt.Errorf("h.provider.GetDetails(%q): %w", id, err)
 	}

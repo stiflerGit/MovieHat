@@ -2021,9 +2021,20 @@ func (*DeleteUserMovieResponse) Descriptor() ([]byte, []int) {
 }
 
 type SearchMovieRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"` // TODO: per page?
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Query string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	// TODO: decide limits here
+	// The maximum number of items to return. The service may return fewer than
+	// this value.
+	// If unspecified, at most X items will be returned.
+	// The maximum value is Y; values above Y will be coerced to Y.
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, received from a previous call.
+	// Provide this to retrieve the subsequent page.
+	//
+	// When paginating, all other parameters must match
+	// the call that provided the page token.
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2065,19 +2076,26 @@ func (x *SearchMovieRequest) GetQuery() string {
 	return ""
 }
 
-func (x *SearchMovieRequest) GetPage() int32 {
+func (x *SearchMovieRequest) GetPageSize() int32 {
 	if x != nil {
-		return x.Page
+		return x.PageSize
 	}
 	return 0
 }
 
+func (x *SearchMovieRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
 type SearchMovieResponse struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
-	Page          int32                         `protobuf:"varint,5,opt,name=page,proto3" json:"page,omitempty"`
-	TotalPages    int32                         `protobuf:"varint,6,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
-	TotalResults  int32                         `protobuf:"varint,7,opt,name=total_results,json=totalResults,proto3" json:"total_results,omitempty"`
-	Results       []*SearchMovieResponse_Result `protobuf:"bytes,8,rep,name=results,proto3" json:"results,omitempty"`
+	state   protoimpl.MessageState        `protogen:"open.v1"`
+	Results []*SearchMovieResponse_Result `protobuf:"bytes,8,rep,name=results,proto3" json:"results,omitempty"`
+	// A token that can be sent as `page_token` to retrieve the next page.
+	// If this field is omitted, there are no subsequent pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2112,32 +2130,18 @@ func (*SearchMovieResponse) Descriptor() ([]byte, []int) {
 	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{44}
 }
 
-func (x *SearchMovieResponse) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *SearchMovieResponse) GetTotalPages() int32 {
-	if x != nil {
-		return x.TotalPages
-	}
-	return 0
-}
-
-func (x *SearchMovieResponse) GetTotalResults() int32 {
-	if x != nil {
-		return x.TotalResults
-	}
-	return 0
-}
-
 func (x *SearchMovieResponse) GetResults() []*SearchMovieResponse_Result {
 	if x != nil {
 		return x.Results
 	}
 	return nil
+}
+
+func (x *SearchMovieResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
 }
 
 type GetSessionProbabilitiesResponse_ParticipantProbabilities struct {
@@ -2444,16 +2448,15 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\x16DeleteUserMovieRequest\x12\x1a\n" +
 	"\x02id\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\"\x19\n" +
-	"\x17DeleteUserMovieResponse\">\n" +
+	"\x17DeleteUserMovieResponse\"f\n" +
 	"\x12SearchMovieRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\x05R\x04page\"\xc2\x02\n" +
-	"\x13SearchMovieResponse\x12\x12\n" +
-	"\x04page\x18\x05 \x01(\x05R\x04page\x12\x1f\n" +
-	"\vtotal_pages\x18\x06 \x01(\x05R\n" +
-	"totalPages\x12#\n" +
-	"\rtotal_results\x18\a \x01(\x05R\ftotalResults\x12@\n" +
-	"\aresults\x18\b \x03(\v2&.gateway.v1.SearchMovieResponse.ResultR\aresults\x1a\x8e\x01\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\x90\x02\n" +
+	"\x13SearchMovieResponse\x12@\n" +
+	"\aresults\x18\b \x03(\v2&.gateway.v1.SearchMovieResponse.ResultR\aresults\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x1a\x8e\x01\n" +
 	"\x06Result\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12=\n" +

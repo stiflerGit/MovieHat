@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_mapTMDBSearchMultiResponseToDomain(t *testing.T) {
+func Test_mapTMDBSearchMovieResponseToDomain(t *testing.T) {
 	tests := []struct {
 		name     string
 		json     string
@@ -25,16 +25,6 @@ func Test_mapTMDBSearchMultiResponseToDomain(t *testing.T) {
 			wantName: "Fight Club",
 		},
 		{
-			name: "tv result uses name when title absent",
-			json: `{
-				"page": 1, "total_pages": 1, "total_results": 1,
-				"results": [{"id": 1396, "name": "Breaking Bad", "first_air_date": "2008-01-20", "poster_path": "/bb.jpg"}]
-			}`,
-			want:     1,
-			wantID:   "1396",
-			wantName: "Breaking Bad",
-		},
-		{
 			name: "empty results",
 			json: `{
 				"page": 1, "total_pages": 1, "total_results": 0,
@@ -46,36 +36,14 @@ func Test_mapTMDBSearchMultiResponseToDomain(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := searchMultiResponse(tt.json)
-			got := mapTMDBSearchMultiResponseToDomain(r)
+			r := searchMovieResponse(tt.json)
+			got := mapTMDBSearchMovieResponseToDomain(r)
 			require.Equal(t, tt.want, len(got.Results))
 
 			if len(got.Results) > 0 {
 				require.Equal(t, tt.wantID, got.Results[0].ID)
 				require.Equal(t, tt.wantName, got.Results[0].Title)
 			}
-		})
-	}
-}
-
-func Test_mapTMDBTvSeriesDetailsResponseToDomain(t *testing.T) {
-	// map assumes validate was called first; only test valid input.
-	tests := []struct {
-		name   string
-		json   string
-		wantID string
-	}{
-		{name: "valid tv series", json: `{"id":1396,"name":"Breaking Bad","first_air_date":"2008-01-20","poster_path":"/bb.jpg"}`, wantID: "1396"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := tvSeriesDetailsResponse(tt.json)
-			require.NoError(t, validateTVSeriesDetailsResponse(r))
-			got, err := mapTMDBTvSeriesDetailsResponseToDomain(r)
-			require.NoError(t, err)
-			require.Equal(t, tt.wantID, got.Result.ID)
-			require.Equal(t, "Breaking Bad", got.Result.Title)
 		})
 	}
 }

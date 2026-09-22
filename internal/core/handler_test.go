@@ -61,7 +61,7 @@ func TestMovieHandlerAddUserMovie(t *testing.T) {
 	h := New(store, nil, movieSearchEngine, WithLogger(testLogger()))
 
 	ctx := authn.SetInfo(t.Context(), auth.Session{UserId: "user-1"})
-	store.EXPECT().AddMovie(gomock.Any(), persistence.AddMovieArg{UserID: "user-1", MovieID: "12345"}).
+	store.EXPECT().AddMovie(gomock.Any(), persistence.AddMovieArg{UserID: "user-1", MovieID: "12345", Title: "Alien"}).
 		Return(persistence.Movie{ID: "movie-1", Title: "Alien"}, nil)
 	movieSearchEngine.EXPECT().GetByID(ctx, "12345").Return(
 		&pb.Movie{
@@ -270,11 +270,12 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 							return persistence.Session{ID: sessionID}, nil
 						},
 					),
-					store.EXPECT().UpdateMovie(gomock.Any(), gomock.Any()).DoAndReturn(
-						func(_ context.Context, arg persistence.UpdateMovieArg) (persistence.Movie, error) {
+					store.EXPECT().UpdateMovies(gomock.Any(), gomock.Any()).DoAndReturn(
+						func(_ context.Context, arg persistence.UpdateMoviesArg) error {
+							require.Equal(t, newMovieID, arg.ID)
 							require.NotNil(t, arg.Status)
 							require.Equal(t, persistence.MovieStatusWatched, *arg.Status)
-							return persistence.Movie{ID: arg.ID}, nil
+							return nil
 						},
 					),
 				)
@@ -292,12 +293,12 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 					persistence.Movie{ID: newMovieID, UserID: "winner-1", Status: persistence.MovieStatusPending}, nil,
 				)
 				gomock.InOrder(
-					store.EXPECT().UpdateMovie(gomock.Any(), gomock.Any()).DoAndReturn(
-						func(_ context.Context, arg persistence.UpdateMovieArg) (persistence.Movie, error) {
+					store.EXPECT().UpdateMovies(gomock.Any(), gomock.Any()).DoAndReturn(
+						func(_ context.Context, arg persistence.UpdateMoviesArg) error {
 							require.Equal(t, oldMovieID, arg.ID)
 							require.NotNil(t, arg.Status)
 							require.Equal(t, persistence.MovieStatusPending, *arg.Status)
-							return persistence.Movie{ID: arg.ID}, nil
+							return nil
 						},
 					),
 					store.EXPECT().UpdateSession(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -307,12 +308,12 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 							return persistence.Session{ID: sessionID}, nil
 						},
 					),
-					store.EXPECT().UpdateMovie(gomock.Any(), gomock.Any()).DoAndReturn(
-						func(_ context.Context, arg persistence.UpdateMovieArg) (persistence.Movie, error) {
+					store.EXPECT().UpdateMovies(gomock.Any(), gomock.Any()).DoAndReturn(
+						func(_ context.Context, arg persistence.UpdateMoviesArg) error {
 							require.Equal(t, newMovieID, arg.ID)
 							require.NotNil(t, arg.Status)
 							require.Equal(t, persistence.MovieStatusWatched, *arg.Status)
-							return persistence.Movie{ID: arg.ID}, nil
+							return nil
 						},
 					),
 				)

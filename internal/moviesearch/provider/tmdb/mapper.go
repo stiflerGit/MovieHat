@@ -9,17 +9,13 @@ import (
 	"github.com/stiflerGit/moviehat/internal/moviesearch"
 )
 
-func mapTMDBSearchMultiResponseToDomain(r *tmdb.SearchMultiResponse) moviesearch.SearchRet {
-	searchRet := moviesearch.SearchRet{
-		Page:         *r.JSON200.Page,
-		TotalPages:   *r.JSON200.TotalPages,
-		TotalResults: *r.JSON200.TotalResults,
-	}
+func mapTMDBSearchMovieResponseToDomain(r *tmdb.SearchMovieResponse) moviesearch.SearchMoviesRet {
+	searchRet := moviesearch.SearchMoviesRet{}
 
-	searchRet.Results = make([]moviesearch.SearchRetResult, 0, len(*r.JSON200.Results))
+	searchRet.Results = make([]moviesearch.SearchMoviesRetResult, 0, len(*r.JSON200.Results))
 	for _, r := range *r.JSON200.Results {
 		searchRet.Results = append(searchRet.Results,
-			moviesearch.SearchRetResult{
+			moviesearch.SearchMoviesRetResult{
 				ID: func() string {
 					if r.Id == nil {
 						return ""
@@ -30,27 +26,18 @@ func mapTMDBSearchMultiResponseToDomain(r *tmdb.SearchMultiResponse) moviesearch
 					if r.Title != nil && *r.Title != "" {
 						return *r.Title
 					}
-					if r.Name != nil && *r.Name != "" {
-						return *r.Name
-					}
 					return ""
 				}(),
 				ReleaseDate: func() time.Time {
-					if r.ReleaseDate != nil {
-						releaseDate, err := time.Parse(time.DateOnly, *r.ReleaseDate)
-						if err != nil {
-							return time.Time{}
-						}
-						return releaseDate
+					if r.ReleaseDate == nil {
+						return time.Time{}
 					}
-					if r.FirstAirDate != nil {
-						firstAirDate, err := time.Parse(time.DateOnly, *r.FirstAirDate)
-						if err != nil {
-							return time.Time{}
-						}
-						return firstAirDate
+
+					releaseDate, err := time.Parse(time.DateOnly, *r.ReleaseDate)
+					if err != nil {
+						return time.Time{}
 					}
-					return time.Time{}
+					return releaseDate
 				}(),
 				PosterPath: func() string {
 					if r.PosterPath == nil {
@@ -82,7 +69,7 @@ func mapTMDBMovieDetailsResponseToDomain(r *tmdb.MovieDetailsResponse) (moviesea
 	}
 
 	return moviesearch.GetDetailsRet{
-		Result: moviesearch.SearchRetResult{
+		Result: moviesearch.SearchMoviesRetResult{
 			ID:          strconv.Itoa(*r.JSON200.Id),
 			Title:       *r.JSON200.Title,
 			ReleaseDate: releaseDate,
@@ -108,7 +95,7 @@ func mapTMDBTvSeriesDetailsResponseToDomain(r *tmdb.TvSeriesDetailsResponse) (mo
 	}
 
 	return moviesearch.GetDetailsRet{
-		Result: moviesearch.SearchRetResult{
+		Result: moviesearch.SearchMoviesRetResult{
 			ID:          strconv.Itoa(*r.JSON200.Id),
 			Title:       *r.JSON200.Name,
 			ReleaseDate: releaseDate,

@@ -10,36 +10,30 @@ var (
 	NotFoundErr = errors.New("not found")
 )
 
-//go:generate go run go.uber.org/mock/mockgen@latest -source types.go -destination mocks/provider.go -package mocks -typed
+//go:generate mockgen -package mocks -destination mocks/movie_searcher.go  . MoviesSearcher
 
-type Provider interface {
-	MovieSearcher
-	MovieDetailsGetter
+type MoviesSearcher interface {
+	SearchMovies(ctx context.Context, arg SearchMoviesArg) (SearchMoviesRet, error)
 }
 
-type MovieSearcher interface {
-	Search(ctx context.Context, arg SearchArg) (SearchRet, error)
-}
-
+//
+//go:generate mockgen -package mocks -destination mocks/movie_details_getter.go  . MovieDetailsGetter
 type MovieDetailsGetter interface {
 	GetDetails(ctx context.Context, arg GetDetailsArg) (GetDetailsRet, error)
 }
 
-type SearchArg struct {
-	Query   string
-	Page    int
-	PerPage int
+type SearchMoviesArg struct {
+	Query  string
+	Offset int
+	Limit  int
 }
 
-type SearchRet struct {
-	Page         int
-	PerPage      int
-	TotalPages   int
-	TotalResults int
-	Results      []SearchRetResult
+type SearchMoviesRet struct {
+	Results []SearchMoviesRetResult
+	HasMore bool
 }
 
-type SearchRetResult struct {
+type SearchMoviesRetResult struct {
 	ID          string
 	Title       string
 	ReleaseDate time.Time
@@ -51,5 +45,5 @@ type GetDetailsArg struct {
 }
 
 type GetDetailsRet struct {
-	Result SearchRetResult
+	Result SearchMoviesRetResult
 }

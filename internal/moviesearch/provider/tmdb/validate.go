@@ -6,7 +6,7 @@ import (
 	tmdb "github.com/stiflerGit/moviehat/gen/tmdb"
 )
 
-func validateSearchMultiResponse(r *tmdb.SearchMultiResponse) error {
+func validateSearchMovieResponse(r *tmdb.SearchMovieResponse) error {
 	if r == nil {
 		return errors.New("response is nil")
 	}
@@ -45,26 +45,6 @@ func validateMovieDetailsResponse(r *tmdb.MovieDetailsResponse) error {
 
 	if r.JSON200.Title == nil {
 		return errors.New("title is nil")
-	}
-
-	return nil
-}
-
-func validateTVSeriesDetailsResponse(r *tmdb.TvSeriesDetailsResponse) error {
-	if r == nil {
-		return errors.New("response is nil")
-	}
-
-	if r.JSON200 == nil {
-		return errors.New("json response is nil")
-	}
-
-	if r.JSON200.Id == nil {
-		return errors.New("id is nil")
-	}
-
-	if r.JSON200.Name == nil {
-		return errors.New("name is nil")
 	}
 
 	return nil

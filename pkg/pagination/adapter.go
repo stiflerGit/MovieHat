@@ -31,14 +31,16 @@ func NewAdapter[T any](
 //
 // hasMore reports whether items may exist past the window. It is false once the
 // source is exhausted
-func (a *Adapter[T]) Fetch(ctx context.Context, page, perPage int) (items []T, hasMore bool, err error) {
-	if page < 1 || perPage < 1 {
-		return nil, false, fmt.Errorf("page and perPage must be >= 1, got page=%d perPage=%d", page, perPage)
+func (a *Adapter[T]) Fetch(ctx context.Context, offset, pageSize int) (items []T, hasMore bool, err error) {
+	if offset < 0 {
+		return nil, false, fmt.Errorf("offset must be >= 0, got: %d", offset)
+	}
+	if pageSize < 1 {
+		return nil, false, fmt.Errorf("pageSize must be >= 1, got pageSize=%d", pageSize)
 	}
 
-	// Inclusive 0-indexed [firstItem, lastItem] window over the flat sequence.
-	firstItem := (page - 1) * perPage
-	lastItem := page*perPage - 1
+	firstItem := offset
+	lastItem := offset + pageSize - 1
 
 	startSrcPage := firstItem/a.sourcePageSize + 1
 	endSrcPage := lastItem/a.sourcePageSize + 1
@@ -46,12 +48,10 @@ func (a *Adapter[T]) Fetch(ctx context.Context, page, perPage int) (items []T, h
 	firstIndexInPage := firstItem % a.sourcePageSize
 	lastIndexInPage := lastItem % a.sourcePageSize
 
-	// lastSrcPageLen tracks the previous page size; a short page means the
-	// source is exhausted.
 	lastSrcPage := 0
 	lastSrcPageLen := a.sourcePageSize
 
-	items = make([]T, 0, perPage)
+	items = make([]T, 0, pageSize)
 	for srcPage := startSrcPage; srcPage <= endSrcPage && lastSrcPageLen == a.sourcePageSize; srcPage++ {
 		elems, err := a.fetch(ctx, srcPage)
 		if err != nil {
@@ -70,7 +70,7 @@ func (a *Adapter[T]) Fetch(ctx context.Context, page, perPage int) (items []T, h
 		lastSrcPage = srcPage
 	}
 
-	hasMore, err = a.hasMoreItems(ctx, page, perPage, lastSrcPage, lastSrcPageLen)
+	hasMore, err = a.hasMoreItems(ctx, offset, pageSize, lastSrcPage, lastSrcPageLen)
 	if err != nil {
 		return items, hasMore, fmt.Errorf("a.hasMoreItems: %w", err)
 	}
@@ -78,8 +78,8 @@ func (a *Adapter[T]) Fetch(ctx context.Context, page, perPage int) (items []T, h
 	return items, hasMore, nil
 }
 
-func (a *Adapter[T]) hasMoreItems(ctx context.Context, page, perPage, lastSrcPage, lastSrcPageLen int) (bool, error) {
-	lastItem := page*perPage - 1
+func (a *Adapter[T]) hasMoreItems(ctx context.Context, offset, pageSize, lastSrcPage, lastSrcPageLen int) (bool, error) {
+	lastItem := offset + pageSize - 1
 	endSrcPage := lastItem/a.sourcePageSize + 1
 	lastFetchedItem := (lastSrcPage-1)*a.sourcePageSize + lastSrcPageLen - 1
 
