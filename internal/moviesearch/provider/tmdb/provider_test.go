@@ -92,7 +92,7 @@ func TestProvider_GetDetails_MovieNotFound(t *testing.T) {
 
 	_, err := p.GetDetails(t.Context(), moviesearch.GetDetailsArg{ID: "999"})
 	require.Error(t, err)
-	require.ErrorIs(t, err, moviesearch.NotFoundErr)
+	require.ErrorIs(t, err, moviesearch.ErrNotFound)
 }
 
 func TestProvider_GetDetails_InvalidID(t *testing.T) {

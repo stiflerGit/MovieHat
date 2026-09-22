@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	NotFoundErr = errors.New("not found")
+	ErrNotFound = errors.New("not found")
 )
 
 //go:generate mockgen -package mocks -destination mocks/movie_searcher.go  . MoviesSearcher
@@ -16,8 +16,8 @@ type MoviesSearcher interface {
 	SearchMovies(ctx context.Context, arg SearchMoviesArg) (SearchMoviesRet, error)
 }
 
-//
 //go:generate mockgen -package mocks -destination mocks/movie_details_getter.go  . MovieDetailsGetter
+
 type MovieDetailsGetter interface {
 	GetDetails(ctx context.Context, arg GetDetailsArg) (GetDetailsRet, error)
 }

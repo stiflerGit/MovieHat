@@ -77,29 +77,3 @@ func mapTMDBMovieDetailsResponseToDomain(r *tmdb.MovieDetailsResponse) (moviesea
 		},
 	}, nil
 }
-
-func mapTMDBTvSeriesDetailsResponseToDomain(r *tmdb.TvSeriesDetailsResponse) (moviesearch.GetDetailsRet, error) {
-	var releaseDate time.Time
-	var err error
-
-	if r.JSON200.FirstAirDate != nil {
-		releaseDate, err = time.Parse(time.DateOnly, *r.JSON200.FirstAirDate)
-		if err != nil {
-			return moviesearch.GetDetailsRet{}, fmt.Errorf("parsing release date: %w", err)
-		}
-	}
-
-	var posterPath string
-	if r.JSON200.PosterPath != nil {
-		posterPath = *r.JSON200.PosterPath
-	}
-
-	return moviesearch.GetDetailsRet{
-		Result: moviesearch.SearchMoviesRetResult{
-			ID:          strconv.Itoa(*r.JSON200.Id),
-			Title:       *r.JSON200.Name,
-			ReleaseDate: releaseDate,
-			PosterPath:  posterPath,
-		},
-	}, nil
-}

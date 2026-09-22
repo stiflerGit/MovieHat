@@ -11,7 +11,6 @@ import (
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	"github.com/stiflerGit/moviehat/internal/core/mocks"
-	extractormock "github.com/stiflerGit/moviehat/internal/core/mocks"
 	"github.com/stiflerGit/moviehat/internal/core/persistence"
 	persistencemock "github.com/stiflerGit/moviehat/internal/core/persistence/mocks"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -35,7 +34,7 @@ func TestNew(t *testing.T) {
 func TestHandlerCreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
-	extractor := extractormock.NewMockExtractor(ctrl)
+	extractor := mocks.NewMockExtractor(ctrl)
 	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	store.EXPECT().CreateUser(gomock.Any(), persistence.CreateUserArg{UserID: "auth-u1"}).
@@ -96,7 +95,7 @@ func TestHandlerDeleteUserMovie_MissingSession(t *testing.T) {
 func TestHandlerEndSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
-	extractor := extractormock.NewMockExtractor(ctrl)
+	extractor := mocks.NewMockExtractor(ctrl)
 	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	participants := []persistence.User{{ID: "u1", Name: "john"}, {ID: "u2", Name: "jane"}}
@@ -128,7 +127,7 @@ func TestHandlerEndSession(t *testing.T) {
 func TestHandlerEndSession_StoreExtractionError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := persistencemock.NewMockTransactionalStorage(ctrl)
-	extractor := extractormock.NewMockExtractor(ctrl)
+	extractor := mocks.NewMockExtractor(ctrl)
 	h := New(store, extractor, nil, WithLogger(testLogger()))
 
 	participants := []persistence.User{{ID: "u1", Name: "john"}, {ID: "u2", Name: "jack"}}
@@ -355,7 +354,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 	type testCase struct {
 		name              string
 		req               *pb.GetSessionProbabilitiesRequest
-		setupMock         func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor)
+		setupMock         func(store *persistencemock.MockTransactionalStorage, extractor *mocks.MockExtractor)
 		wantCode          connect.Code // 0 => success
 		wantProbabilities []*pb.GetSessionProbabilitiesResponse_ParticipantProbabilities
 	}
@@ -373,7 +372,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "session not found",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{}, persistence.ErrNotFound)
 			},
@@ -382,7 +381,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "get session internal error",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{}, errors.New("boom"))
 			},
@@ -391,7 +390,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "list participants error",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{ID: sessionID}, nil)
 				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
@@ -402,7 +401,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "no participants returns empty probabilities",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{ID: sessionID}, nil)
 				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
@@ -413,7 +412,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "single participant is certain and skips extractor",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, _ *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{ID: sessionID}, nil)
 				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
@@ -424,7 +423,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "multi participants map probabilities by position",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{ID: sessionID}, nil)
 				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
@@ -439,7 +438,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		{
 			name: "extractor error",
 			req:  &pb.GetSessionProbabilitiesRequest{SessionId: sessionID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *extractormock.MockExtractor) {
+			setupMock: func(store *persistencemock.MockTransactionalStorage, extractor *mocks.MockExtractor) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).
 					Return(persistence.Session{ID: sessionID}, nil)
 				store.EXPECT().ListParticipants(gomock.Any(), persistence.ListParticipantsArg{SessionID: sessionID}).
@@ -455,7 +454,7 @@ func TestHandlerGetSessionProbabilities(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			store := persistencemock.NewMockTransactionalStorage(ctrl)
-			extractor := extractormock.NewMockExtractor(ctrl)
+			extractor := mocks.NewMockExtractor(ctrl)
 			h := New(store, extractor, nil, WithLogger(testLogger()))
 
 			if tc.setupMock != nil {

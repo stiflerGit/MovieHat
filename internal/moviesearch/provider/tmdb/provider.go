@@ -89,7 +89,7 @@ func (p *Provider) getMovieDetail(ctx context.Context, id int32) (*moviesearch.G
 	}
 
 	if httpResp.StatusCode == http.StatusNotFound {
-		return nil, moviesearch.NotFoundErr
+		return nil, moviesearch.ErrNotFound
 	}
 
 	movieDetailsResponse, err := tmdb.ParseMovieDetailsResponse(httpResp)

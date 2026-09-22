@@ -2,10 +2,13 @@ package moviesearch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
+	"github.com/stiflerGit/moviehat/pkg/pagination"
 
+	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -25,14 +28,19 @@ func New(
 }
 
 func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.SearchMovieResponse, error) {
-	var pageToken pageToken
+	var pageToken pagination.Token[string]
 	var err error
 
-	if req.PageToken != "" {
-		pageToken, err = decodePageToken(req.PageToken)
-		if err != nil {
-			return nil, fmt.Errorf("decodePageToken: %w", err)
+	pageToken, err = pagination.DecodeToken[string](req.PageToken)
+	if err != nil {
+		return nil, fmt.Errorf("pagination.DecodeToken: %w", err)
+	}
+
+	if err = pageToken.Validate(req.Query); err != nil {
+		if errors.Is(err, pagination.ErrTokenMismatch) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid page_token"))
 		}
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	resp, err := h.searcher.SearchMovies(ctx,
@@ -60,11 +68,11 @@ func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.S
 	}
 
 	if resp.HasMore {
-		token, err := encodePageToken(req.Query, pageToken.NextOffset+int(req.PageSize))
+		v, err := pagination.EncodeToken(pagination.Token[string]{Value: req.Query, NextOffset: pageToken.NextOffset + int(req.PageSize)})
 		if err != nil {
 			return nil, fmt.Errorf("encodePageToken: %w", err)
 		}
-		searchResponse.NextPageToken = token
+		searchResponse.NextPageToken = string(v)
 	}
 
 	return searchResponse, nil
