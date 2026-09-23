@@ -11,7 +11,7 @@ run: ## Run the server locally
 	go run ./cmd/moviehat
 
 test: ## Run all tests
-	go test ./...
+	go test -v ./...
 
 fmt: ## Format Go code
 	gofmt -w $$(find . -path './vendor' -prune -o -name '*.go' -print)

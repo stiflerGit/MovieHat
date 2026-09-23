@@ -656,14 +656,20 @@ func (s *Storage) AddMovie(ctx context.Context, in persistence.AddMovieArg) (per
 // GetMovie returns a movie.
 func (s *Storage) GetMovie(ctx context.Context, in persistence.GetMovieArg) (persistence.Movie, error) {
 	if in.MovieID == "" {
-		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("movie_id title is empty")}
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("movie_id is empty")}
+	}
+
+	if in.UserID == "" {
+		return persistence.Movie{}, persistence.ErrInvalidArgument{Err: errors.New("user_id is empty")}
 	}
 
 	whereStmts := []string{
 		"movie_id=?",
+		"owner_id=?",
 	}
 	args := []any{
 		in.MovieID,
+		in.UserID,
 	}
 
 	if !in.IncludeDeleted {

@@ -298,13 +298,9 @@ func (h *Handler) SetSessionMovie(ctx context.Context, req *pb.SetSessionMovieRe
 			return nil
 		}
 
-		movie, err := s.GetMovie(ctx, persistence.GetMovieArg{MovieID: req.MovieId})
+		movie, err := s.GetMovie(ctx, persistence.GetMovieArg{UserID: authSession.UserId, MovieID: req.MovieId})
 		if err != nil {
 			return fmt.Errorf("getting movie: %w", err)
-		}
-
-		if movie.UserID != authSession.UserId {
-			return connect.NewError(connect.CodePermissionDenied, errors.New("movie does not belong to calling user"))
 		}
 
 		if movie.Status == persistence.MovieStatusWatched {

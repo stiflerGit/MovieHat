@@ -213,20 +213,6 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 			wantCode: connect.CodePermissionDenied,
 		},
 		{
-			name: "movie does not belong to winner",
-			ctx:  authCtx("winner-1"),
-			req:  &pb.SetSessionMovieRequest{SessionId: sessionID, MovieId: newMovieID},
-			setupMock: func(store *persistencemock.MockTransactionalStorage) {
-				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).Return(
-					persistence.Session{ID: sessionID, ClosedAt: time.Now(), WinnerID: "winner-1"}, nil,
-				)
-				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{MovieID: newMovieID}).Return(
-					persistence.Movie{ID: newMovieID, UserID: "winner-2", Status: persistence.MovieStatusPending}, nil,
-				)
-			},
-			wantCode: connect.CodePermissionDenied,
-		},
-		{
 			name: "movie already watched",
 			ctx:  authCtx("winner-1"),
 			req:  &pb.SetSessionMovieRequest{SessionId: sessionID, MovieId: newMovieID},
@@ -234,7 +220,7 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).Return(
 					persistence.Session{ID: sessionID, ClosedAt: time.Now(), WinnerID: "winner-1"}, nil,
 				)
-				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{MovieID: newMovieID}).Return(
+				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{UserID: "winner-1", MovieID: newMovieID}).Return(
 					persistence.Movie{ID: newMovieID, UserID: "winner-1", Status: persistence.MovieStatusWatched}, nil,
 				)
 			},
@@ -258,7 +244,7 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).Return(
 					persistence.Session{ID: sessionID, ClosedAt: time.Now(), WinnerID: "winner-1"}, nil,
 				)
-				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{MovieID: newMovieID}).Return(
+				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{UserID: "winner-1", MovieID: newMovieID}).Return(
 					persistence.Movie{ID: newMovieID, UserID: "winner-1", Status: persistence.MovieStatusPending}, nil,
 				)
 				gomock.InOrder(
@@ -288,7 +274,7 @@ func TestHandlerSetSessionMovie(t *testing.T) {
 				store.EXPECT().GetSession(gomock.Any(), persistence.GetSessionArg{ID: sessionID}).Return(
 					persistence.Session{ID: sessionID, ClosedAt: time.Now(), WinnerID: "winner-1", WatchedMovieID: oldMovieID}, nil,
 				)
-				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{MovieID: newMovieID}).Return(
+				store.EXPECT().GetMovie(gomock.Any(), persistence.GetMovieArg{UserID: "winner-1", MovieID: newMovieID}).Return(
 					persistence.Movie{ID: newMovieID, UserID: "winner-1", Status: persistence.MovieStatusPending}, nil,
 				)
 				gomock.InOrder(
