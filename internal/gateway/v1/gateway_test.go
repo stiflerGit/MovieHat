@@ -9,7 +9,7 @@ import (
 	gatewaypb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	gatewaymock "github.com/stiflerGit/moviehat/internal/gateway/v1/mocks"
-	moviehat "github.com/stiflerGit/moviehat/internal/moviehat"
+	moviehat "github.com/stiflerGit/moviehat/internal/core"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )

@@ -10,7 +10,7 @@ CREATE TABLE users(
 );
 
 CREATE TABLE movies (
-    id         VARCHAR(255) PRIMARY KEY,
+    movie_id   VARCHAR(255) NOT NULL,
     owner_id   VARCHAR(255) NOT NULL,
     title      TEXT NOT NULL,
     status     VARCHAR(255) NOT NULL,
@@ -19,6 +19,7 @@ CREATE TABLE movies (
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME,
 
+    PRIMARY KEY (movie_id, owner_id),
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
@@ -32,7 +33,7 @@ CREATE TABLE sessions(
     watched_movie_id    VARCHAR(255),
 
     FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE RESTRICT
-    FOREIGN KEY (watched_movie_id) REFERENCES movies(id) ON DELETE RESTRICT
+    -- FOREIGN KEY (watched_movie_id) REFERENCES movies(movie_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE participants(

@@ -73,8 +73,8 @@ func (e *Extractor) Extract(ctx context.Context, current *pb.Session) (*pb.User,
 	}
 
 	// theoretically we should never reach this point
-	// However GetProbabilities returns floats that can sum to 0.999…8 (e.g. 3 equal participants), so a rand draw
-	// in that last sliver would panic. return current.Participants[len-1] fallback
+	// However GetProbabilities returns floats that can sum to 0.999…8 (e.g. 3 equal participants),
+	// so a rand draw in that last sliver would panic. return current.Participants[len-1] fallback
 	return current.Participants[len(current.Participants)-1], nil
 }
 

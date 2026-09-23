@@ -46,28 +46,28 @@ func TestFullSession(t *testing.T) {
 	// add films for each users
 	ctx, callInfo = connect.NewClientContext(ctx)
 	callInfo.RequestHeader().Add("Authorization", fmt.Sprintf("Bearer %s", user1Token))
-	user1Movie1, err := client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie11", Note: "note11"})
+	user1Movie1, err := client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "13754", Note: "note11"}) // Tekkonkinkreet
 	require.NoError(t, err)
-	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie12", Note: "note12"})
+	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "348", Note: "note12"}) // Alien
 	require.NoError(t, err)
-	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie13", Note: "note13"})
+	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "42872", Note: "note13"}) // Alien 2
 	require.NoError(t, err)
 
 	ctx, callInfo = connect.NewClientContext(ctx)
 	callInfo.RequestHeader().Add("Authorization", fmt.Sprintf("Bearer %s", user2Token))
-	user2Movie1, err := client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie21", Note: "note11"})
+	user2Movie1, err := client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "157336", Note: "note11"}) // Interstellar
 	require.NoError(t, err)
-	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie22", Note: "note12"})
+	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "13754", Note: "note12"}) // Tekkonkinkreet
 	require.NoError(t, err)
-	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieTitle: "movie23", Note: "note13"})
+	_, err = client.AddUserMovie(ctx, &gatewayv1.AddUserMovieRequest{MovieId: "9340", Note: "note13"}) // The Goonies
 	require.NoError(t, err)
 	// begin a session
 	createSessionResp, err := client.CreateSession(ctx, &gatewayv1.CreateSessionRequest{})
 	require.NoError(t, err)
 	// add participants to a session
-	client.AddParticipant(ctx, &gatewayv1.AddParticipantRequest{SessionId: createSessionResp.Session.Id, UserId: updateUser1Resp.User.Id})
+	_, err = client.AddParticipant(ctx, &gatewayv1.AddParticipantRequest{SessionId: createSessionResp.Session.Id, UserId: updateUser1Resp.User.Id})
 	require.NoError(t, err)
-	client.AddParticipant(ctx, &gatewayv1.AddParticipantRequest{SessionId: createSessionResp.Session.Id, UserId: updateUser2Resp.User.Id})
+	_, err = client.AddParticipant(ctx, &gatewayv1.AddParticipantRequest{SessionId: createSessionResp.Session.Id, UserId: updateUser2Resp.User.Id})
 	require.NoError(t, err)
 	// check probabilities
 	getSessionProbabilities, err := client.GetSessionProbabilities(ctx, &gatewayv1.GetSessionProbabilitiesRequest{SessionId: createSessionResp.Session.Id})
@@ -99,7 +99,17 @@ func TestFullSession(t *testing.T) {
 	_, err = client.SetSessionMovie(ctx, setSessionMovieReq)
 	require.NoError(t, err)
 
-	// TODO: when status is available in movie add an assertion to check that status of the selected movie is watched
+	// check that status of the movies is correct
+	listUserMoviesResp, err := client.ListUserMovies(ctx, &gatewayv1.ListUserMoviesRequest{UserId: endSessionResp.Winner.Id})
+	require.NoError(t, err)
+	for _, m := range listUserMoviesResp.Movies {
+		wantStatus := gatewayv1.ListUserMoviesResponse_MovieStatus_STATUS_PENDING
+		if m.Movie.Id == setSessionMovieReq.MovieId {
+			wantStatus = gatewayv1.ListUserMoviesResponse_MovieStatus_STATUS_WATCHED
+		}
+		assert.Equal(t, m.Status, wantStatus)
+	}
+
 	getSessionResp, err := client.GetSession(ctx, &gatewayv1.GetSessionRequest{Id: createSessionResp.Session.Id})
 	require.NoError(t, err)
 

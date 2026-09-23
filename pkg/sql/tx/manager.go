@@ -86,7 +86,7 @@ func (m *Manager) WithTx(ctx context.Context, fn func(ctx context.Context) error
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if err := fn(context.WithValue(ctx, contextKeyTransaction{}, tx)); err != nil {
 		return err

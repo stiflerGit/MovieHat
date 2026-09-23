@@ -72,7 +72,7 @@ func (s Storage) ListUsersScores(ctx context.Context, arg persistence.ListUsersS
 		}
 		return persistence.ListUsersScoresRet{}, fmt.Errorf("r.db.QueryContext: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var userScores []persistence.UserScore
 	for rows.Next() {

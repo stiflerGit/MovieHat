@@ -1,3 +1,5 @@
+// Gateway is MovieHat's public API: invitation-only accounts, personal movie
+// watchlists, and selection sessions that fairly pick the movie to watch.
 syntax = "proto3";
 
 package gateway.v1;
@@ -5,15 +7,21 @@ package gateway.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
+// CreateInvitationRequest is empty; the caller must be authenticated.
 message CreateInvitationRequest {}
 
+// CreateInvitationResponse describes a newly created invitation to sign up.
 message CreateInvitationResponse {
+  // Opaque token redeemed during sign-up.
   string invitation_token = 1;
+  // Frontend URL pre-filled with the invitation token.
   string invitation_url = 2;
   google.protobuf.Timestamp expires_at = 3;
+  // Maximum number of times the invitation can be redeemed.
   int32 max_uses = 4;
 }
 
+// SignUpRequest creates an account by redeeming a valid invitation.
 message SignUpRequest {
   string email = 1 [(buf.validate.field).string.email = true];
   string password = 2 [
@@ -27,10 +35,12 @@ message SignUpRequest {
   ];
 }
 
+// SignUpResponse carries the auth token for the new account.
 message SignUpResponse {
   string token = 1;
 }
 
+// SignInRequest authenticates an existing account.
 message SignInRequest {
   string email = 1 [(buf.validate.field).string.email = true];
   string password = 2 [
@@ -40,14 +50,18 @@ message SignInRequest {
   ];
 }
 
+// SignInResponse carries the auth token for the session.
 message SignInResponse {
   string token = 1;
 }
 
+// SignOutRequest is empty; the current auth token is invalidated.
 message SignOutRequest {}
 
+// SignOutResponse is empty.
 message SignOutResponse {}
 
+// User is an authenticated MovieHat account.
 message User {
   string id = 1;
   string name = 2;
@@ -61,6 +75,7 @@ message ListUsersResponse {
   repeated User users = 1;
 }
 
+// UpdateUserRequest updates the authenticated user's profile.
 message UpdateUserRequest {
   string name = 1 [
     (buf.validate.field).string.min_len = 1,
@@ -72,6 +87,7 @@ message UpdateUserResponse {
   User user = 1;
 }
 
+// DeleteUserRequest is empty; it deletes the authenticated user.
 message DeleteUserRequest {}
 
 message DeleteUserResponse {
@@ -84,11 +100,15 @@ message CreateSessionResponse {
   Session session = 1;
 }
 
+// Session is a movie-selection round among participants. When ended, a
+// winner is extracted fairly, weighted so that everyone gets a turn over time.
 message Session {
   string id = 1;
   google.protobuf.Timestamp created_at = 2;
+  // Zero until the session is ended.
   google.protobuf.Timestamp closed_at = 3;
   repeated User participants = 4;
+  // Set only after the session has been ended.
   User winner = 5;
 }
 
@@ -109,6 +129,7 @@ message GetSessionResponse {
   Session session = 1;
 }
 
+// EndSessionRequest closes the session and extracts its winner.
 message EndSessionRequest {
   string id = 1 [
     (buf.validate.field).required = true,
@@ -116,10 +137,12 @@ message EndSessionRequest {
   ];
 }
 
+// EndSessionResponse carries the extracted winner.
 message EndSessionResponse {
   User winner = 1;
 }
 
+// SetSessionMovieRequest records the movie the winner chose to watch.
 message SetSessionMovieRequest {
   string session_id = 1 [
     (buf.validate.field).required = true,
@@ -140,6 +163,8 @@ message GetSessionProbabilitiesRequest {
   ];
 }
 
+// GetSessionProbabilitiesResponse reports the current extraction probability
+// of each participant.
 message GetSessionProbabilitiesResponse {
   message ParticipantProbabilities {
     string user_id = 1;
@@ -196,20 +221,27 @@ message ListParticipantsResponse {
   repeated User participants = 1;
 }
 
+// AddUserMovieRequest adds a TMDB movie to the authenticated user's watchlist.
 message AddUserMovieRequest {
-  string movie_title = 1 [
+  // TMDB movie id.
+  string movie_id = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string.min_len = 1
   ];
   string note = 2;
 }
 
+// Movie references a movie on TMDB.
 message Movie {
+  // TMDB movie id.
   string id = 1;
   string title = 2;
-  string note = 3;
+  google.protobuf.Timestamp release_date = 3;
+  // TMDB-relative poster path.
+  string poster_path = 4;
 }
 
+// AddUserMovieResponse carries the movie as added to the watchlist.
 message AddUserMovieResponse {
   Movie movie = 1;
 }
@@ -221,10 +253,24 @@ message ListUserMoviesRequest {
   ];
 }
 
+// ListUserMoviesResponse lists a user's watchlist with watch status.
 message ListUserMoviesResponse {
-  repeated Movie movies = 1;
+  message MovieStatus {
+    enum Status {
+      STATUS_UNSPECIFIED = 0;
+      STATUS_PENDING = 1;
+      STATUS_WATCHED = 2;
+    }
+
+    Movie movie = 1;
+    Status status = 2;
+  }
+
+  repeated MovieStatus movies = 1;
 }
 
+// DeleteUserMovieRequest removes a movie from the authenticated user's
+// watchlist.
 message DeleteUserMovieRequest {
   string id = 1 [
     (buf.validate.field).required = true,
@@ -234,7 +280,42 @@ message DeleteUserMovieRequest {
 
 message DeleteUserMovieResponse {}
 
+message SearchMovieRequest {
+  string query = 1;
+
+  // TODO: decide limits here
+  // The maximum number of items to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most X items will be returned.
+  // The maximum value is Y; values above Y will be coerced to Y.
+  int32 page_size = 2;
+
+  // A page token, received from a previous call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters must match
+  // the call that provided the page token.
+  string page_token = 3;
+}
+
+message SearchMovieResponse {
+  message Result {
+    string id = 1;
+    string title = 2;
+    google.protobuf.Timestamp release_date = 3;
+    string poster_path = 4;
+  }
+
+  repeated Result results = 8;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
 service GatewayService {
+  // GatewayService exposes all MovieHat operations over ConnectRPC.
+
   rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse);
   rpc SignUp(SignUpRequest) returns (SignUpResponse);
   rpc SignIn(SignInRequest) returns (SignInResponse);
@@ -255,4 +336,5 @@ service GatewayService {
   rpc AddUserMovie(AddUserMovieRequest) returns (AddUserMovieResponse);
   rpc ListUserMovies(ListUserMoviesRequest) returns (ListUserMoviesResponse);
   rpc DeleteUserMovie(DeleteUserMovieRequest) returns (DeleteUserMovieResponse);
+  rpc SearchMovie(SearchMovieRequest) returns (SearchMovieResponse);
 }

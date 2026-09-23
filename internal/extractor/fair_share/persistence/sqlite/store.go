@@ -36,7 +36,7 @@ func (r *Storage) WithTx(ctx context.Context, fn func(context.Context, persisten
 	if err != nil {
 		return fmt.Errorf("r.db.BeginTx(ctx): %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	err = fn(ctx, &Storage{db: r.db, executor: tx})
 	if err != nil {
@@ -93,7 +93,7 @@ func (r Storage) ListUsersScores(ctx context.Context, arg persistence.ListUsersS
 		}
 		return persistence.ListUsersScoresRet{}, fmt.Errorf("r.db.QueryContext: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var userScores []persistence.UserScore
 	for rows.Next() {
