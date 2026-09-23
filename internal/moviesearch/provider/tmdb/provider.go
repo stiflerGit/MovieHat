@@ -1,3 +1,4 @@
+// Package tmdb implements the moviesearch domain over the TMDB HTTP API.
 package tmdb
 
 import (
@@ -12,26 +13,31 @@ import (
 )
 
 const (
+	// tmdbPageSize is the number of items TMDB returns per page.
 	tmdbPageSize = 200 // TODO: verify this info
 )
 
+// ClientInterface is the subset of the generated TMDB client the provider needs.
+//
 //go:generate mockgen -destination mocks/client.go -package mocks . ClientInterface
-
 type ClientInterface interface {
 	SearchMovie(ctx context.Context, params *tmdb.SearchMovieParams, reqEditors ...tmdb.RequestEditorFn) (*http.Response, error)
 	MovieDetails(ctx context.Context, movieId int32, params *tmdb.MovieDetailsParams, reqEditors ...tmdb.RequestEditorFn) (*http.Response, error)
 }
 
+// Provider is a moviesearch provider backed by TMDB.
 type Provider struct {
 	tmdbClient ClientInterface
 }
 
+// New returns a Provider using the given TMDB client.
 func New(client ClientInterface) *Provider {
 	return &Provider{
 		tmdbClient: client,
 	}
 }
 
+// SearchMovies returns the requested offset window of results for arg.Query.
 func (p *Provider) SearchMovies(ctx context.Context, arg moviesearch.SearchMoviesArg) (moviesearch.SearchMoviesRet, error) {
 	// TODO: skip mapping each time since there is a change that the adapter drop some of
 	// 	items of the page. Map once adapter.Fetch return
@@ -68,6 +74,8 @@ func (p *Provider) SearchMovies(ctx context.Context, arg moviesearch.SearchMovie
 	return moviesearch.SearchMoviesRet{Results: items, HasMore: hasMore}, nil
 }
 
+// GetDetails resolves a movie id to its details, returning moviesearch.ErrNotFound
+// when TMDB reports the movie unknown.
 func (p *Provider) GetDetails(ctx context.Context, arg moviesearch.GetDetailsArg) (moviesearch.GetDetailsRet, error) {
 	idAsInt, err := strconv.Atoi(arg.ID)
 	if err != nil {

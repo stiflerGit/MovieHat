@@ -1,3 +1,5 @@
+// Package moviesearch adapts movie search and details between the gateway API
+// and pluggable movie providers (e.g. TMDB).
 package moviesearch
 
 import (
@@ -12,11 +14,15 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// Handler implements the movie-search part of the gateway API on top of a
+// MoviesSearcher/MovieDetailsGetter pair, mapping protobuf requests to the
+// domain types.
 type Handler struct {
 	searcher           MoviesSearcher
 	movieDetailsGetter MovieDetailsGetter
 }
 
+// New returns a Handler backed by the given searcher and details getter.
 func New(
 	provider MoviesSearcher,
 	movieDetailsGetter MovieDetailsGetter,
@@ -27,6 +33,9 @@ func New(
 	}
 }
 
+// Search runs a paginated movie search. An empty page_token starts from the
+// first page; a page_token that does not match the query is rejected with an
+// INVALID_ARGUMENT error. next_page_token is set only when more results exist.
 func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.SearchMovieResponse, error) {
 	var pageToken pagination.Token[string]
 	var err error
@@ -78,6 +87,7 @@ func (h *Handler) Search(ctx context.Context, req *pb.SearchMovieRequest) (*pb.S
 	return searchResponse, nil
 }
 
+// GetByID returns the gateway movie representation for a provider movie id.
 func (h *Handler) GetByID(ctx context.Context, id string) (*pb.Movie, error) {
 	getDetailsRet, err := h.movieDetailsGetter.GetDetails(ctx, GetDetailsArg{ID: id})
 	if err != nil {

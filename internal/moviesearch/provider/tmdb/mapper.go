@@ -10,7 +10,7 @@ import (
 )
 
 func mapTMDBSearchMovieResponseToDomain(r *tmdb.SearchMovieResponse) moviesearch.SearchMoviesRet {
-	searchRet := moviesearch.SearchMoviesRet{}
+	var searchRet moviesearch.SearchMoviesRet
 
 	searchRet.Results = make([]moviesearch.SearchMoviesRetResult, 0, len(*r.JSON200.Results))
 	for _, r := range *r.JSON200.Results {
@@ -52,6 +52,7 @@ func mapTMDBSearchMovieResponseToDomain(r *tmdb.SearchMovieResponse) moviesearch
 	return searchRet
 }
 
+// mapTMDBMovieDetailsResponseToDomain assumes validateMovieDetailsResponse passed.
 func mapTMDBMovieDetailsResponseToDomain(r *tmdb.MovieDetailsResponse) (moviesearch.GetDetailsRet, error) {
 	var releaseDate time.Time
 	var err error

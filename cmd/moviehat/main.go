@@ -41,6 +41,7 @@ import (
 )
 
 const (
+	// tmdbAPIURL is the base URL of the TMDB API.
 	tmdbAPIURL = "https://api.themoviedb.org"
 )
 
@@ -53,7 +54,8 @@ type Config struct {
 	BootstrapEnabled      bool   `env:"BOOTSTRAP_ENABLED" envDefault:"false"`
 	BootstrapEmail        string `env:"BOOTSTRAP_EMAIL"`
 	BootstrapPassword     string `env:"BOOTSTRAP_PASSWORD"`
-	TMDToken              string `env:"TMDB_TOKEN"`
+	// TMDToken is the TMDB API bearer token.
+	TMDToken string `env:"TMDB_TOKEN"`
 }
 
 func main() {

@@ -19,9 +19,9 @@ func TestToken_Validate(t *testing.T) {
 		want    string
 		wantErr error
 	}{
-		{name: "match", token: Token[string]{Value: "alien"}, want: "alien"},
-		{name: "mismatch", token: Token[string]{Value: "alien"}, want: "aliens", wantErr: ErrTokenMismatch},
-		{name: "zero token vs query", token: Token[string]{}, want: "alien", wantErr: ErrTokenMismatch},
+		{name: "match", token: Token[string]{Value: "alien", NextOffset: 20}, want: "alien"},
+		{name: "mismatch", token: Token[string]{Value: "alien", NextOffset: 20}, want: "aliens", wantErr: ErrTokenMismatch},
+		{name: "first page token validates any query", token: Token[string]{}, want: "alien"},
 	}
 
 	for _, tt := range tests {

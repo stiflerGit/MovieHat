@@ -6,6 +6,8 @@ import (
 	tmdb "github.com/stiflerGit/moviehat/gen/tmdb"
 )
 
+// validateSearchMovieResponse checks the fields pagination depends on;
+// result items are not validated.
 func validateSearchMovieResponse(r *tmdb.SearchMovieResponse) error {
 	if r == nil {
 		return errors.New("response is nil")

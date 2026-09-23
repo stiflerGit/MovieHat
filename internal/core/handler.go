@@ -24,7 +24,7 @@ type Extractor interface {
 	StoreExtraction(ctx context.Context, session *pb.Session) error
 }
 
-// MovieSearchEngine ...
+// MovieSearchEngine serves movie search and details to the gateway API.
 //
 //go:generate mockgen -package mocks -destination mocks/movie_search_engine.go . MovieSearchEngine
 type MovieSearchEngine interface {

@@ -13,15 +13,16 @@ var ErrTokenMismatch = errors.New("page token does not match request")
 
 // Token is the decoded content of an opaque page token. Value identifies the
 // request the token belongs to (e.g. the search query), so that a token used
-// against a different request can be detected and rejected with ErrMismatch.
+// against a different request can be detected and rejected with ErrTokenMismatch.
 // NextOffset is the offset to resume from; the zero Token is the first page.
 type Token[T comparable] struct {
 	Value      T   `json:"value"`
 	NextOffset int `json:"next_offset"`
 }
 
-// Validate reports whether the token was issued for v, returning ErrMismatch
-// otherwise.
+// Validate reports whether the token may be used to resume the request
+// identified by v. Tokens for the first page (zero NextOffset) are always
+// valid; otherwise a different Value yields ErrTokenMismatch.
 func (t *Token[T]) Validate(v T) error {
 	if t.NextOffset > 0 && v != t.Value {
 		return ErrTokenMismatch

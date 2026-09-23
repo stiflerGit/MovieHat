@@ -26,11 +26,11 @@ func NewAdapter[T any](
 	}
 }
 
-// Fetch returns up to perPage items from the 1-indexed logical page page. The
+// Fetch returns up to pageSize items starting at the 0-indexed offset. The
 // window may span several source pages.
 //
-// hasMore reports whether items may exist past the window. It is false once the
-// source is exhausted
+// hasMore reports whether items may exist past the window. It is false once
+// the source is exhausted.
 func (a *Adapter[T]) Fetch(ctx context.Context, offset, pageSize int) (items []T, hasMore bool, err error) {
 	if offset < 0 {
 		return nil, false, fmt.Errorf("offset must be >= 0, got: %d", offset)
