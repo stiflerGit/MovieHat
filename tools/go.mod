@@ -1,6 +1,6 @@
 module github.com/stiflerGit/moviehat/tools
 
-go 1.26.4
+go 1.27
 
 replace github.com/stiflerGit/moviehat => ..
 

@@ -18,16 +18,18 @@ import (
 	tmdbclient "github.com/stiflerGit/moviehat/gen/tmdb"
 	"github.com/stiflerGit/moviehat/internal/auth"
 	authstorage "github.com/stiflerGit/moviehat/internal/auth/persistence/sqlite"
-	moviehat "github.com/stiflerGit/moviehat/internal/core"
-	moviehatsqlite "github.com/stiflerGit/moviehat/internal/core/persistence/sqlite"
-	extractor "github.com/stiflerGit/moviehat/internal/extractor/weighted"
-	equalprobabilityscorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/equal"
-	fairsharescorer "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share"
-	fairsharescorerpersistence "github.com/stiflerGit/moviehat/internal/extractor/weighted/scorer/fair_share/persistence/sqlite"
 	gateway "github.com/stiflerGit/moviehat/internal/gateway/v1"
+	"github.com/stiflerGit/moviehat/internal/list"
+	weightedscorers "github.com/stiflerGit/moviehat/internal/lottery/weighted"
+	equalprobabilityscorer "github.com/stiflerGit/moviehat/internal/lottery/weighted/scorer/equal"
+	fairsharescorer "github.com/stiflerGit/moviehat/internal/lottery/weighted/scorer/fair_share"
+	fairsharescorerpersistence "github.com/stiflerGit/moviehat/internal/lottery/weighted/scorer/fair_share/persistence/sqlite"
 	appmigrations "github.com/stiflerGit/moviehat/internal/migrations"
-	"github.com/stiflerGit/moviehat/internal/moviesearch"
-	"github.com/stiflerGit/moviehat/internal/moviesearch/provider/tmdb"
+	"github.com/stiflerGit/moviehat/internal/movie"
+	"github.com/stiflerGit/moviehat/internal/movie/provider/tmdb"
+	moviehatsqlite "github.com/stiflerGit/moviehat/internal/persistence/sqlite"
+	"github.com/stiflerGit/moviehat/internal/session"
+	"github.com/stiflerGit/moviehat/internal/user"
 	requesteditor "github.com/stiflerGit/moviehat/pkg/http/requesteditor"
 	"github.com/stiflerGit/moviehat/pkg/sql/tx"
 
@@ -54,8 +56,7 @@ type Config struct {
 	BootstrapEnabled      bool   `env:"BOOTSTRAP_ENABLED" envDefault:"false"`
 	BootstrapEmail        string `env:"BOOTSTRAP_EMAIL"`
 	BootstrapPassword     string `env:"BOOTSTRAP_PASSWORD"`
-	// TMDToken is the TMDB API bearer token.
-	TMDToken string `env:"TMDB_TOKEN"`
+	TMDBToken             string `env:"TMDB_TOKEN"`
 }
 
 func main() {
@@ -93,9 +94,9 @@ func run(ctx context.Context, config Config) error {
 		return fmt.Errorf("auth.New: %w", err)
 	}
 
-	extractor, err := extractor.New(
+	lottery, err := weightedscorers.New(
 		fairsharescorerpersistence.New(txManager),
-		[]extractor.WeightedScorer{
+		[]weightedscorers.WeightedScorer{
 			{
 				Weight: 70,
 				Scorer: fairsharescorer.New(fairsharescorerpersistence.New(txManager)),
@@ -107,19 +108,24 @@ func run(ctx context.Context, config Config) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("weighted.New: %w", err)
+		return fmt.Errorf("weightedscorers.New: %w", err)
 	}
 
-	tmdbclient, err := tmdbclient.NewClient(tmdbAPIURL, tmdbclient.WithRequestEditorFn(requesteditor.SetBearerToken(config.TMDToken)))
+	tmdbclient, err := tmdbclient.NewClient(tmdbAPIURL, tmdbclient.WithRequestEditorFn(requesteditor.SetBearerToken(config.TMDBToken)))
 	if err != nil {
 		return fmt.Errorf("tmdbclient.NewClient: %w", err)
 	}
 
 	tmdbProvider := tmdb.New(tmdbclient)
-	moviesearchengine := moviesearch.New(tmdbProvider, tmdbProvider)
-	movieHatHandler := moviehat.New(moviehatsqlite.New(txManager), extractor, moviesearchengine, moviehat.WithLogger(logger))
+	movieHandler := movie.New(tmdbProvider, tmdbProvider)
 
-	if err := bootstrapInitialUser(ctx, config, authHandler, movieHatHandler); err != nil {
+	storage := moviehatsqlite.New(txManager)
+
+	userHandler := user.New(storage)
+	sessionHandler := session.New(storage, lottery)
+	listHandler := list.New(storage)
+
+	if err := bootstrapInitialUser(ctx, config, authHandler, userHandler); err != nil {
 		return fmt.Errorf("bootstrapInitialUser: %w", err)
 	}
 
@@ -128,7 +134,7 @@ func run(ctx context.Context, config Config) error {
 		return fmt.Errorf("url.Parse(config.FrontendInvitationURL): %w", err)
 	}
 
-	gatewayHandler := gateway.New(authHandler, movieHatHandler, gateway.WithLogger(logger), gateway.WithInvitationBaseURL(frontendInvitationURL))
+	gatewayHandler := gateway.New(authHandler, userHandler, sessionHandler, listHandler, movieHandler, gateway.WithLogger(logger), gateway.WithInvitationBaseURL(frontendInvitationURL))
 
 	path, handler := gatewayv1connect.NewGatewayServiceHandler(
 		gatewayHandler,
@@ -251,7 +257,7 @@ func initDB(ctx context.Context, dbPath string) (*tx.Manager, error) {
 	return tx.NewManager(db), nil
 }
 
-func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.Handler, movieHatHandler *moviehat.Handler) error {
+func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.Handler, userHandler *user.Handler) error {
 	if !config.BootstrapEnabled {
 		return nil
 	}
@@ -271,7 +277,7 @@ func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.
 		return fmt.Errorf("authHandler.BootstrapCreateUser: %w", err)
 	}
 
-	listUsersRet, err := movieHatHandler.ListUsers(ctx, &gatewaypb.ListUsersRequest{})
+	listUsersRet, err := userHandler.ListUsers(ctx, &gatewaypb.ListUsersRequest{})
 	if err != nil {
 		return fmt.Errorf("movieHatHandler.ListUsers: %w", err)
 	}
@@ -283,7 +289,7 @@ func bootstrapInitialUser(ctx context.Context, config Config, authHandler *auth.
 		}
 	}
 
-	_, err = movieHatHandler.CreateUser(ctx, moviehat.CreateUserRequest{UserID: bootstrapRet.UserID})
+	_, err = userHandler.CreateUser(ctx, user.CreateUserRequest{UserID: bootstrapRet.UserID})
 	if err != nil {
 		return fmt.Errorf("movieHatHandler.CreateUser: %w", err)
 	}

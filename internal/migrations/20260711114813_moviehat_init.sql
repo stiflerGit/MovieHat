@@ -9,18 +9,17 @@ CREATE TABLE users(
     deleted_at  DATETIME
 );
 
-CREATE TABLE movies (
+CREATE TABLE lists (
+    user_id   VARCHAR(255) NOT NULL,
     movie_id   VARCHAR(255) NOT NULL,
-    owner_id   VARCHAR(255) NOT NULL,
-    title      TEXT NOT NULL,
     status     VARCHAR(255) NOT NULL,
     note       TEXT NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME,
 
-    PRIMARY KEY (movie_id, owner_id),
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE RESTRICT
+    PRIMARY KEY (movie_id, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE sessions(

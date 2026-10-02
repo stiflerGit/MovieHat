@@ -49,22 +49,8 @@ func expectTx(store *persistencemock.MockTransactionalStorage) {
 }
 
 func TestHandlerSignUp(t *testing.T) {
-	t.Run("invalid request", func(t *testing.T) {
-		h := &Handler{secret: "secret"}
-		_, err := h.SignUp(t.Context(), &pb.SignUpRequest{})
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
-
-	t.Run("missing invitation token", func(t *testing.T) {
-		h := &Handler{secret: "secret"}
-		var err error
-		require.NotPanics(t, func() {
-			_, err = h.SignUp(t.Context(), &pb.SignUpRequest{Email: "a@b.com", Password: "password1"})
-		})
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
+	// Request validation happens in the gateway interceptor; the handler only
+	// sees valid requests.
 
 	t.Run("invitation not found", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
@@ -148,12 +134,8 @@ func TestHandlerSignUp(t *testing.T) {
 }
 
 func TestHandlerSignIn(t *testing.T) {
-	t.Run("invalid request", func(t *testing.T) {
-		h := &Handler{secret: "secret"}
-		_, err := h.SignIn(t.Context(), &pb.SignInRequest{})
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
+	// Request validation happens in the gateway interceptor; the handler only
+	// sees valid requests.
 
 	t.Run("user not found", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
@@ -248,13 +230,6 @@ func TestHandlerSignOut(t *testing.T) {
 }
 
 func TestHandlerValidateSession(t *testing.T) {
-	t.Run("empty token", func(t *testing.T) {
-		h := &Handler{secret: "secret"}
-		_, err := h.ValidateSession(t.Context(), &ValidateSessionRequest{})
-		require.Error(t, err)
-		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
-	})
-
 	t.Run("session not found", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		store := persistencemock.NewMockTransactionalStorage(ctrl)

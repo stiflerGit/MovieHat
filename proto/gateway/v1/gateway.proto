@@ -338,3 +338,4 @@ service GatewayService {
   rpc DeleteUserMovie(DeleteUserMovieRequest) returns (DeleteUserMovieResponse);
   rpc SearchMovie(SearchMovieRequest) returns (SearchMovieResponse);
 }
+ 

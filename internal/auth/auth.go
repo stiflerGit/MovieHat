@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"time"
 
+	"buf.build/go/protovalidate"
 	pb "github.com/stiflerGit/moviehat/api/gateway/v1"
 	"github.com/stiflerGit/moviehat/internal/auth/persistence"
 
-	"buf.build/go/protovalidate"
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
 	"golang.org/x/crypto/bcrypt"
@@ -159,10 +159,6 @@ type SignUpResponse struct {
 
 // SignUp creates an invited user account and returns a session token.
 func (h *Handler) SignUp(ctx context.Context, req *pb.SignUpRequest) (SignUpResponse, error) {
-	if err := protovalidate.Validate(req); err != nil {
-		return SignUpResponse{}, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
 	invitationTokenHash, err := tokenHash(req.InvitationToken, h.secret)
 	if err != nil {
 		h.logger.ErrorContext(ctx, "SignUp tokenHash", "error", err)
@@ -251,10 +247,6 @@ func (h *Handler) createSession(ctx context.Context, storage persistence.Storage
 
 // SignIn authenticates a user and returns a session token.
 func (h *Handler) SignIn(ctx context.Context, req *pb.SignInRequest) (*pb.SignInResponse, error) {
-	if err := protovalidate.Validate(req); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
 	getUserRet, err := h.storage.GetUser(ctx, persistence.GetUserArg{Email: req.Email})
 	if err != nil {
 		if errors.Is(err, persistence.ErrNotFound) {

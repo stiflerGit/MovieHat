@@ -1,0 +1,119 @@
+package tmdb
+
+import (
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/stiflerGit/moviehat/internal/movie"
+	"github.com/stiflerGit/moviehat/internal/movie/provider"
+	"github.com/stiflerGit/moviehat/internal/movie/provider/tmdb/mocks"
+
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+)
+
+func httpResp(status int, body string) *http.Response {
+	return &http.Response{
+		StatusCode: status,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(body)),
+	}
+}
+
+func TestNew(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+	require.NotNil(t, p)
+}
+
+func TestProvider_SearchMovies(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().
+		SearchMovie(gomock.Any(), gomock.Any()).
+		Return(httpResp(200, `{"page":1,"total_pages":1,"total_results":1,"results":[{"id":550,"title":"Fight Club","release_date":"1999-10-15"}]}`), nil)
+
+	ret, err := p.SearchMovies(t.Context(), provider.SearchMoviesArg{Query: "Fight Club", Offset: 0, Limit: 200})
+	require.NoError(t, err)
+	require.Len(t, ret.Results, 1)
+	require.Equal(t, "550", ret.Results[0].ID)
+	require.Equal(t, "Fight Club", ret.Results[0].Title)
+}
+
+func TestProvider_SearchMovies_HTTPError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().SearchMovie(gomock.Any(), gomock.Any()).Return(nil, io.ErrUnexpectedEOF)
+
+	_, err := p.SearchMovies(t.Context(), provider.SearchMoviesArg{Query: "xyz", Limit: 10})
+	require.Error(t, err)
+}
+
+func TestProvider_SearchMovies_NilJSON(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().SearchMovie(gomock.Any(), gomock.Any()).Return(httpResp(200, `{}`), nil)
+
+	_, err := p.SearchMovies(t.Context(), provider.SearchMoviesArg{Query: "test", Limit: 10})
+	require.Error(t, err)
+}
+
+func TestProvider_GetDetails_Movie(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().
+		MovieDetails(gomock.Any(), int32(550), gomock.Any()).
+		Return(httpResp(200, `{"id":550,"title":"Fight Club","release_date":"1999-10-15"}`), nil)
+
+	ret, err := p.GetDetails(t.Context(), provider.GetDetailsArg{ID: "550"})
+	require.NoError(t, err)
+	require.Equal(t, "550", ret.Result.ID)
+	require.Equal(t, "Fight Club", ret.Result.Title)
+}
+
+func TestProvider_GetDetails_MovieNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().
+		MovieDetails(gomock.Any(), int32(999), gomock.Any()).
+		Return(httpResp(404, `Not found`), nil)
+
+	_, err := p.GetDetails(t.Context(), provider.GetDetailsArg{ID: "999"})
+	require.Error(t, err)
+	require.ErrorIs(t, err, movie.ErrNotFound)
+}
+
+func TestProvider_GetDetails_InvalidID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	_, err := p.GetDetails(t.Context(), provider.GetDetailsArg{ID: "not-a-number"})
+	require.Error(t, err)
+}
+
+func TestProvider_GetDetails_MovieDetails_ValidationError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockClientInterface(ctrl)
+	p := New(client)
+
+	client.EXPECT().
+		MovieDetails(gomock.Any(), int32(1), gomock.Any()).
+		Return(httpResp(200, `{}`), nil)
+
+	_, err := p.GetDetails(t.Context(), provider.GetDetailsArg{ID: "1"})
+	require.Error(t, err)
+}
